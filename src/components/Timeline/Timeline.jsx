@@ -144,50 +144,6 @@ const Timeline = () => {
               </Button>
             )}
             
-            {/* Botones para estados específicos */}
-            {estadoActual === 'creada' && (
-              <Button
-                variant="warning"
-                size="sm"
-                onClick={() => handleAvanzarEstado('revision')}
-                icon={ArrowRightIcon}
-              >
-                Pasar a Revisión
-              </Button>
-            )}
-            
-            {estadoActual === 'revision' && (
-              <Button
-                variant="success"
-                size="sm"
-                onClick={() => handleAvanzarEstado('aprobada')}
-                icon={ArrowRightIcon}
-              >
-                Aprobar Orden
-              </Button>
-            )}
-            
-            {estadoActual === 'aprobada' && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => handleAvanzarEstado('enviada')}
-                icon={ArrowRightIcon}
-              >
-                Marcar como Enviada
-              </Button>
-            )}
-            
-            {estadoActual === 'enviada' && (
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => handleAvanzarEstado('completada')}
-                icon={ArrowRightIcon}
-              >
-                Completar Orden
-              </Button>
-            )}
           </div>
 
           {/* Botón de reinicio */}
@@ -207,21 +163,6 @@ const Timeline = () => {
           </div>
         </div>
 
-        {/* Información adicional */}
-        <div className="bg-gradient-to-r from-warning-50 to-accent-50 rounded-lg p-4 border border-warning-200">
-          <div className="flex items-start space-x-3">
-            <ExclamationTriangleIcon className="w-5 h-5 text-warning-600 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-medium text-warning-900 mb-1">
-                Información del Workflow
-              </h4>
-              <p className="text-xs text-warning-700">
-                El timeline muestra el progreso de la orden a través de los diferentes estados. 
-                Cada estado debe completarse antes de avanzar al siguiente.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

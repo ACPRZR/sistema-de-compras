@@ -70,8 +70,8 @@ const ItemsOrden = ({ categoriaCompra }) => {
   };
 
   const importarCSV = () => {
-    // TODO: Implementar importación CSV
-    alert('Funcionalidad de importación CSV estará disponible en la próxima versión');
+    // Funcionalidad no necesaria para uso local
+    console.log('Importación CSV no disponible en versión local');
   };
 
   const total = calcularTotal();

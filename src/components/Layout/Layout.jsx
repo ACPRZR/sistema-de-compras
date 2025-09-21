@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, currentPage, onNavigate }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const toggleSidebar = () => {
@@ -22,7 +22,9 @@ const Layout = ({ children }) => {
         <div className="fixed left-0 top-16 bottom-0 z-40">
           <Sidebar 
             isCollapsed={sidebarCollapsed} 
-            onToggle={toggleSidebar} 
+            onToggle={toggleSidebar}
+            currentPage={currentPage}
+            onNavigate={onNavigate}
           />
         </div>
 

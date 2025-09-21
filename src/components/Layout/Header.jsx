@@ -1,9 +1,7 @@
 import React from 'react';
 import { 
   BuildingOffice2Icon, 
-  UserCircleIcon,
-  BellIcon,
-  Cog6ToothIcon
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { EMPRESA_CONFIG } from '../../utils/constants';
 
@@ -31,19 +29,8 @@ const Header = () => {
 
           {/* Información del usuario */}
           <div className="flex items-center space-x-4">
-            {/* Notificaciones */}
-            <button className="relative p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200">
-              <BellIcon className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-danger-500 rounded-full"></span>
-            </button>
-
-            {/* Configuración */}
-            <button className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200">
-              <Cog6ToothIcon className="w-5 h-5" />
-            </button>
-
             {/* Perfil del usuario */}
-            <div className="flex items-center space-x-3 pl-4 border-l border-secondary-200">
+            <div className="flex items-center space-x-3">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">Álvaro Pérez Román</p>
                 <p className="text-xs text-secondary-600">Departamento de Logística</p>

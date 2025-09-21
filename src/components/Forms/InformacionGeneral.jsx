@@ -14,15 +14,19 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
   const [numeroOC, setNumeroOC] = useState('');
 
   useEffect(() => {
-    // Generar número de OC automáticamente
-    const nuevoNumero = generateOCNumber();
-    setNumeroOC(nuevoNumero);
-    onFormChange('numeroOC', nuevoNumero);
+    // Generar número de OC automáticamente solo una vez
+    if (!numeroOC) {
+      const nuevoNumero = generateOCNumber();
+      setNumeroOC(nuevoNumero);
+      onFormChange('numeroOC', nuevoNumero);
+    }
     
-    // Establecer fecha de requerimiento por defecto
-    const fechaRequerimiento = getDefaultRequerimientoDate();
-    onFormChange('fechaRequerimiento', fechaRequerimiento);
-  }, [onFormChange]);
+    // Establecer fecha de requerimiento por defecto solo si no existe
+    if (!formData.fechaRequerimiento) {
+      const fechaRequerimiento = getDefaultRequerimientoDate();
+      onFormChange('fechaRequerimiento', fechaRequerimiento);
+    }
+  }, []); // ← Array vacío para que solo se ejecute una vez
 
   const handleCategoriaChange = (categoria) => {
     onFormChange('categoriaCompra', categoria);
@@ -49,26 +53,11 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
           <label className="block text-sm font-medium text-gray-700">
             Número de Orden de Compra
           </label>
-          <div className="flex items-center space-x-2">
-            <div className="flex-1">
-              <Input
-                value={numeroOC}
-                readOnly
-                className="bg-secondary-50 border-secondary-200 font-mono font-semibold"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const nuevoNumero = generateOCNumber();
-                setNumeroOC(nuevoNumero);
-                onFormChange('numeroOC', nuevoNumero);
-              }}
-              className="btn btn-secondary text-xs px-3 py-2"
-            >
-              🔄 Regenerar
-            </button>
-          </div>
+          <Input
+            value={numeroOC}
+            readOnly
+            className="bg-secondary-50 border-secondary-200 font-mono font-semibold"
+          />
           <p className="text-xs text-secondary-500 flex items-center">
             <ClockIcon className="w-3 h-3 mr-1" />
             Formato: OC-YYYY-MM-NNN (generado automáticamente)
@@ -137,20 +126,6 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
           </div>
         </div>
 
-        {/* Información adicional */}
-        <div className="bg-gradient-to-r from-accent-50 to-primary-50 rounded-lg p-4 border border-accent-200">
-          <div className="flex items-start space-x-3">
-            <DocumentTextIcon className="w-5 h-5 text-accent-600 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-medium text-accent-900 mb-1">
-                Sistema Inteligente
-              </h4>
-              <p className="text-xs text-accent-700">
-                El sistema genera automáticamente el número de OC y sugiere proveedores según la categoría seleccionada.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

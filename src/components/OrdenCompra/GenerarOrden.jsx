@@ -171,7 +171,8 @@ Las Asambleas de Dios del Perú`;
     if (email) {
       window.open(`mailto:${email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`);
     } else {
-      alert('Ingrese el email del proveedor primero');
+      // Para uso local, mostrar mensaje simple
+      console.log('Email del proveedor no especificado');
     }
   };
 
