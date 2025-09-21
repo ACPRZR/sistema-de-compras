@@ -4,7 +4,6 @@ import {
   ClipboardDocumentListIcon,
   ArrowDownTrayIcon,
   EnvelopeIcon,
-  ShareIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import Button from '../UI/Button';
@@ -247,14 +246,6 @@ Las Asambleas de Dios del Perú`;
                 icon={EnvelopeIcon}
               >
                 Enviar por Email
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={() => navigator.share?.({ text: ordenGenerada })}
-                icon={ShareIcon}
-              >
-                Compartir
               </Button>
             </div>
 

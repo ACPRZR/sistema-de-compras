@@ -37,6 +37,13 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
       onFormChange('contactoProveedor', '');
       onFormChange('telefonoProveedor', '');
       onFormChange('emailProveedor', '');
+    } else if (proveedorData === 'varios') {
+      // Configurar para varios proveedores
+      onFormChange('proveedor', 'Varios');
+      onFormChange('rucProveedor', 'Sin RUC');
+      onFormChange('contactoProveedor', '');
+      onFormChange('telefonoProveedor', '');
+      onFormChange('emailProveedor', '');
     } else {
       // Completar datos del proveedor seleccionado
       const proveedor = JSON.parse(proveedorData);
@@ -103,6 +110,7 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
 
   const opcionesProveedores = [
     { value: '', label: 'Seleccione proveedor' },
+    { value: 'varios', label: 'Varios (Sin RUC)' },
     ...proveedores.map(proveedor => ({
       value: JSON.stringify(proveedor),
       label: proveedor.nombre
@@ -152,9 +160,11 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
                 label="RUC"
                 value={formData.rucProveedor || ''}
                 onChange={(e) => handleRUCChange(e.target.value)}
-                placeholder="20123456789"
+                placeholder={formData.proveedor === 'Varios' ? 'Sin RUC' : '20123456789'}
                 error={errors.ruc}
-                required
+                required={formData.proveedor !== 'Varios'}
+                readOnly={formData.proveedor === 'Varios'}
+                className={formData.proveedor === 'Varios' ? 'bg-secondary-50' : ''}
               />
             </div>
             <Button

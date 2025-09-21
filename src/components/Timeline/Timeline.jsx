@@ -2,8 +2,7 @@ import React from 'react';
 import { 
   ChartBarIcon, 
   ArrowRightIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import TimelineStep from './TimelineStep';
 import Button from '../UI/Button';
@@ -31,19 +30,9 @@ const Timeline = () => {
 
   const getBotonConfig = (estado) => {
     const configs = {
-      revision: {
-        label: 'Pasar a Revisión',
-        variant: 'warning',
-        icon: ArrowRightIcon
-      },
-      aprobada: {
-        label: 'Aprobar Orden',
+      lista: {
+        label: 'Marcar como Lista',
         variant: 'success',
-        icon: ArrowRightIcon
-      },
-      enviada: {
-        label: 'Marcar como Enviada',
-        variant: 'primary',
         icon: ArrowRightIcon
       },
       completada: {

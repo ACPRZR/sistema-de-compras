@@ -38,7 +38,7 @@ const App = () => {
     // Condiciones comerciales
     condicionesPago: 'contado',
     
-    // Control y aprobación
+    // Control y aprobación (fijo para uso local)
     compradorResponsable: 'alvaro_perez'
   });
 
@@ -46,7 +46,15 @@ const App = () => {
   const [showResumen, setShowResumen] = useState(false);
   const [currentPage, setCurrentPage] = useState('nueva-orden');
 
-  const { items, calcularTotal } = useOrdenCompra();
+  const { 
+    items, 
+    contadorItems, 
+    agregarItem, 
+    actualizarItem, 
+    eliminarItem, 
+    calcularTotal, 
+    resumenItems 
+  } = useOrdenCompra();
   const { actualizarComprador } = useTimeline();
 
   const handleFormChange = useCallback((field, value) => {
@@ -75,9 +83,10 @@ const App = () => {
                            formData.unidadAutoriza && 
                            formData.ubicacionEntrega && 
                            formData.lugarEntrega && 
+                           formData.datosProyecto &&
                            formData.categoriaCompra && 
                            formData.proveedor && 
-                           formData.rucProveedor && 
+                           (formData.proveedor === 'Varios' || formData.rucProveedor) && 
                            Object.keys(items).length > 0;
 
   return (
@@ -105,14 +114,27 @@ const App = () => {
               categoriaCompra={formData.categoriaCompra}
             />
             
-            <ItemsOrden categoriaCompra={formData.categoriaCompra} />
+            <ItemsOrden 
+              categoriaCompra={formData.categoriaCompra}
+              items={items}
+              contadorItems={contadorItems}
+              agregarItem={agregarItem}
+              actualizarItem={actualizarItem}
+              eliminarItem={eliminarItem}
+              calcularTotal={calcularTotal}
+              resumenItems={resumenItems}
+            />
             
             <Timeline />
             
             {/* Resumen y generación */}
             {hasRequiredFields && (
               <div className="mt-8 space-y-6">
-                <ResumenOrden formData={formData} />
+                <ResumenOrden 
+                  formData={formData} 
+                  items={items}
+                  total={total}
+                />
                 <GenerarOrden 
                   formData={formData} 
                   onGenerarOrden={handleGenerarOrden}

@@ -22,25 +22,9 @@ const TimelineStep = ({
         textColor: 'text-success-600',
         borderColor: 'border-success-500'
       },
-      revision: {
-        icon: ClockIcon,
-        label: 'En Revisión',
-        color: 'warning',
-        bgColor: 'bg-warning-500',
-        textColor: 'text-warning-600',
-        borderColor: 'border-warning-500'
-      },
-      aprobada: {
+      lista: {
         icon: CheckCircleIcon,
-        label: 'Aprobada',
-        color: 'success',
-        bgColor: 'bg-success-500',
-        textColor: 'text-success-600',
-        borderColor: 'border-success-500'
-      },
-      enviada: {
-        icon: CheckCircleIcon,
-        label: 'Enviada',
+        label: 'Lista',
         color: 'primary',
         bgColor: 'bg-primary-500',
         textColor: 'text-primary-600',

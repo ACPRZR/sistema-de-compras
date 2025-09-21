@@ -9,21 +9,20 @@ import {
 import Button from '../UI/Button';
 import Input from '../UI/Input';
 import Select from '../UI/Select';
-import { useOrdenCompra } from '../../hooks/useOrdenCompra';
 import { getTemplatesByCategoria } from '../../data/templates';
 import { UNIDADES_MEDIDA } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 
-const ItemsOrden = ({ categoriaCompra }) => {
-  const {
-    items,
-    contadorItems,
-    agregarItem,
-    actualizarItem,
-    eliminarItem,
-    calcularTotal,
-    resumenItems
-  } = useOrdenCompra();
+const ItemsOrden = ({ 
+  categoriaCompra, 
+  items, 
+  contadorItems, 
+  agregarItem, 
+  actualizarItem, 
+  eliminarItem, 
+  calcularTotal, 
+  resumenItems 
+}) => {
 
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState([]);

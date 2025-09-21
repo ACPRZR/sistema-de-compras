@@ -5,12 +5,16 @@ import {
   ClipboardDocumentListIcon,
   BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
-import { useOrdenCompra } from '../../hooks/useOrdenCompra';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
-const ResumenOrden = ({ formData }) => {
-  const { resumenItems, calcularTotal } = useOrdenCompra();
-  const total = calcularTotal();
+const ResumenOrden = ({ formData, items, total }) => {
+  // Calcular resumen de items desde los props
+  const resumenItems = Object.values(items)
+    .filter(item => item.descripcion && item.descripcion.trim() !== '')
+    .map(item => ({
+      ...item,
+      subtotalFormatted: formatCurrency(item.subtotal)
+    }));
 
   const getUnidadNegocioTexto = (unidad) => {
     const unidades = {
@@ -120,6 +124,16 @@ const ResumenOrden = ({ formData }) => {
               <p className="text-secondary-600">Ubicación de Entrega:</p>
               <p className="font-medium">{formData.ubicacionEntrega || 'No especificada'}</p>
             </div>
+            
+            <div>
+              <p className="text-secondary-600">Lugar de Entrega:</p>
+              <p className="font-medium">{formData.lugarEntrega || 'No especificado'}</p>
+            </div>
+            
+            <div className="md:col-span-2">
+              <p className="text-secondary-600">Detalles del Proyecto:</p>
+              <p className="font-medium">{formData.datosProyecto || 'No especificado'}</p>
+            </div>
           </div>
         </div>
 
@@ -148,35 +162,22 @@ const ResumenOrden = ({ formData }) => {
           </div>
         )}
 
-        {/* Información de contacto del proveedor */}
-        {(formData.contactoProveedor || formData.telefonoProveedor || formData.emailProveedor) && (
-          <div className="space-y-4">
-            <h4 className="font-medium text-gray-900">Contacto del Proveedor</h4>
+        {/* Encargado de compra */}
+        <div className="space-y-4">
+          <h4 className="font-medium text-gray-900">Encargado de Compra</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-secondary-600">Responsable:</p>
+              <p className="font-medium">Álvaro Pérez Román</p>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              {formData.contactoProveedor && (
-                <div>
-                  <p className="text-secondary-600">Contacto:</p>
-                  <p className="font-medium">{formData.contactoProveedor}</p>
-                </div>
-              )}
-              
-              {formData.telefonoProveedor && (
-                <div>
-                  <p className="text-secondary-600">Teléfono:</p>
-                  <p className="font-medium">{formData.telefonoProveedor}</p>
-                </div>
-              )}
-              
-              {formData.emailProveedor && (
-                <div>
-                  <p className="text-secondary-600">Email:</p>
-                  <p className="font-medium">{formData.emailProveedor}</p>
-                </div>
-              )}
+            <div>
+              <p className="text-secondary-600">Cargo:</p>
+              <p className="font-medium">Departamento de Logística</p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Resumen final */}
         <div className="bg-gradient-to-r from-success-50 to-accent-50 rounded-lg p-4 border border-success-200">

@@ -71,11 +71,12 @@ const InformacionOrganizacional = ({ formData, onFormChange }) => {
           </div>
           
           <Input
-            label="Datos de Proyecto (Opcional)"
+            label="Detalles del Proyecto"
             value={formData.datosProyecto || ''}
             onChange={(e) => handleChange('datosProyecto', e.target.value)}
-            placeholder="Nombre del proyecto o código de referencia"
-            helperText="Enlace esta compra a un proyecto específico si aplica"
+            placeholder="Nombre del proyecto, código de referencia o descripción"
+            helperText="Información del proyecto asociado a esta compra"
+            required
           />
         </div>
 

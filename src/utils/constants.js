@@ -50,7 +50,7 @@ export const UBICACIONES_ENTREGA = [
   { 
     value: 'sede_nacional', 
     label: 'Sede Nacional',
-    direccion: 'Av. Colombia 325, San Isidro, Lima'
+    direccion: 'Av. Colombia 325, Pueblo Libre'
   },
   { 
     value: 'carapongo', 
@@ -60,7 +60,7 @@ export const UBICACIONES_ENTREGA = [
   { 
     value: 'diego_thompson', 
     label: 'Diego Thompson',
-    direccion: 'Av. Diego Thompson 142, San Luis, Lima'
+    direccion: 'Av Nicolás Arriola 123, Lima'
   },
   { 
     value: 'chorrillos', 
@@ -84,33 +84,13 @@ export const CONDICIONES_PAGO = [
   { value: '60dias', label: '60 días' }
 ];
 
-// Compradores responsables
-export const COMPRADORES_RESPONSABLES = [
-  { 
-    value: 'alvaro_perez', 
-    label: 'Álvaro Pérez Román',
-    cargo: 'Logística',
-    codigo: 'A. Pérez'
-  },
-  { 
-    value: 'maria_garcia', 
-    label: 'María García',
-    cargo: 'Adquisiciones',
-    codigo: 'M. García'
-  },
-  { 
-    value: 'carlos_lopez', 
-    label: 'Carlos López',
-    cargo: 'Compras Generales',
-    codigo: 'C. López'
-  },
-  { 
-    value: 'ana_rodriguez', 
-    label: 'Ana Rodríguez',
-    cargo: 'Compras Especializadas',
-    codigo: 'A. Rodríguez'
-  }
-];
+// Comprador responsable (simplificado para uso local)
+export const COMPRADOR_RESPONSABLE = {
+  value: 'alvaro_perez',
+  label: 'Álvaro Pérez Román',
+  cargo: 'Logística',
+  codigo: 'A. Pérez'
+};
 
 // Estados de la orden
 export const ESTADOS_ORDEN = [
@@ -121,13 +101,15 @@ export const ESTADOS_ORDEN = [
   { value: 'completada', label: 'Completada', color: 'accent', icon: '🎉' }
 ];
 
-// Reglas de aprobación por monto
+// Reglas de aprobación simplificadas para uso local
 export const REGLAS_APROBACION = [
-  { min: 0, max: 1000, aprobador: 'Supervisor Directo', nivel: 1 },
-  { min: 1001, max: 5000, aprobador: 'Gerente de Área', nivel: 2 },
-  { min: 5001, max: 15000, aprobador: 'Gerencia General', nivel: 3 },
-  { min: 15001, max: 50000, aprobador: 'Presidencia', nivel: 4 },
-  { min: 50001, max: Infinity, aprobador: 'Consejo Directivo', nivel: 5 }
+  { min: 0, max: Infinity, aprobador: 'A. Pérez', nivel: 1 }
+];
+
+// Prioridades simplificadas para uso local
+export const PRIORIDADES = [
+  { value: 'normal', label: 'Normal', color: 'success', icon: '📋' },
+  { value: 'urgente', label: 'Urgente', color: 'danger', icon: '⚡' }
 ];
 
 // Configuración de la empresa
