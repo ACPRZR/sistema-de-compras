@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-secondary-200;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen font-sans antialiased;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Botones profesionales */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-soft hover:shadow-medium hover:from-primary-700 hover:to-primary-800 focus:ring-primary-500;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-secondary-700 border border-secondary-300 shadow-soft hover:bg-secondary-50 hover:border-secondary-400 focus:ring-secondary-500;
+  }
+  
+  .btn-success {
+    @apply bg-gradient-to-r from-success-600 to-success-700 text-white shadow-soft hover:shadow-medium hover:from-success-700 hover:to-success-800 focus:ring-success-500;
+  }
+  
+  .btn-warning {
+    @apply bg-gradient-to-r from-warning-500 to-warning-600 text-white shadow-soft hover:shadow-medium hover:from-warning-600 hover:to-warning-700 focus:ring-warning-400;
+  }
+  
+  .btn-danger {
+    @apply bg-gradient-to-r from-danger-600 to-danger-700 text-white shadow-soft hover:shadow-medium hover:from-danger-700 hover:to-danger-800 focus:ring-danger-500;
+  }
+  
+  .btn-ghost {
+    @apply text-secondary-600 hover:bg-secondary-100 focus:ring-secondary-500;
+  }
+  
+  /* Inputs profesionales */
+  .input {
+    @apply block w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg bg-white placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  .input-error {
+    @apply border-danger-300 focus:ring-danger-500 focus:border-danger-500;
+  }
+  
+  /* Selects profesionales */
+  .select {
+    @apply block w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  /* Cards profesionales */
+  .card {
+    @apply bg-white rounded-xl shadow-soft border border-secondary-200 overflow-hidden;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-secondary-200 bg-gradient-to-r from-secondary-50 to-white;
+  }
+  
+  .card-body {
+    @apply px-6 py-4;
+  }
+  
+  .card-footer {
+    @apply px-6 py-4 border-t border-secondary-200 bg-secondary-50;
+  }
+  
+  /* Badges profesionales */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply bg-primary-100 text-primary-800;
+  }
+  
+  .badge-success {
+    @apply bg-success-100 text-success-800;
+  }
+  
+  .badge-warning {
+    @apply bg-warning-100 text-warning-800;
+  }
+  
+  .badge-danger {
+    @apply bg-danger-100 text-danger-800;
+  }
+  
+  .badge-secondary {
+    @apply bg-secondary-100 text-secondary-800;
+  }
+  
+  /* Animaciones personalizadas */
+  .animate-fade-in {
+    @apply animate-fade-in;
+  }
+  
+  .animate-slide-up {
+    @apply animate-slide-up;
+  }
+  
+  .animate-scale-in {
+    @apply animate-scale-in;
+  }
+  
+  /* Efectos de hover profesionales */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-medium;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-glow;
+  }
+  
+  /* Gradientes profesionales */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-700;
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-r from-secondary-600 to-secondary-700;
+  }
+  
+  .gradient-accent {
+    @apply bg-gradient-to-r from-accent-500 to-accent-600;
+  }
+  
+  /* Efectos de glassmorphism */
+  .glass {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-black/10 backdrop-blur-sm border border-white/10;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent;
+  }
+  
+  .shadow-glow-primary {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+  
+  .shadow-glow-success {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+  }
+  
+  .shadow-glow-warning {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+  }
+  
+  .shadow-glow-danger {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+  }
+}
