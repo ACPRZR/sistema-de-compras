@@ -42,8 +42,6 @@ const App = () => {
     compradorResponsable: 'alvaro_perez'
   });
 
-  const [ordenGenerada, setOrdenGenerada] = useState('');
-  const [showResumen, setShowResumen] = useState(false);
   const [currentPage, setCurrentPage] = useState('nueva-orden');
 
   const { 
@@ -70,8 +68,8 @@ const App = () => {
   }, [actualizarComprador]);
 
   const handleGenerarOrden = (orden) => {
-    setOrdenGenerada(orden);
-    setShowResumen(true);
+    // Orden generada - se puede usar para logging o futuras funcionalidades
+    console.log('Orden generada:', orden);
   };
 
   const handleNavigate = (page) => {

@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
-  CheckCircleIcon, 
-  ClockIcon
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 const TimelineStep = ({ 

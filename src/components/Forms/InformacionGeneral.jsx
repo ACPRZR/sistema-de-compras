@@ -26,7 +26,7 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
       const fechaRequerimiento = getDefaultRequerimientoDate();
       onFormChange('fechaRequerimiento', fechaRequerimiento);
     }
-  }, []); // ← Array vacío para que solo se ejecute una vez
+  }, [formData.fechaRequerimiento, numeroOC, onFormChange]);
 
   const handleCategoriaChange = (categoria) => {
     onFormChange('categoriaCompra', categoria);

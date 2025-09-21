@@ -162,7 +162,7 @@ export const useTimeline = () => {
         limpiarDatosAntiguos();
       }
     }
-  }, []);
+  }, [limpiarDatosAntiguos]);
 
   return {
     estadoActual,

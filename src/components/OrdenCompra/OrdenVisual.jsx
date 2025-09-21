@@ -5,7 +5,6 @@ import {
   ClipboardDocumentListIcon,
   BuildingStorefrontIcon,
   CalendarIcon,
-  MapPinIcon,
   UserIcon,
   BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
