@@ -231,23 +231,6 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
           )}
         </div>
 
-        {/* Información adicional */}
-        {categoriaCompra && proveedores.length > 0 && (
-          <div className="bg-gradient-to-r from-success-50 to-accent-50 rounded-lg p-4 border border-success-200">
-            <div className="flex items-start space-x-3">
-              <BuildingStorefrontIcon className="w-5 h-5 text-success-600 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-medium text-success-900 mb-1">
-                  Proveedores Preferenciales
-                </h4>
-                <p className="text-xs text-success-700">
-                  Se han encontrado {proveedores.length} proveedor(es) especializados en {categoriaCompra}.
-                  Seleccione uno para completar automáticamente los datos.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

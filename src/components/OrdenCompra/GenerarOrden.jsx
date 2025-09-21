@@ -7,14 +7,16 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import Button from '../UI/Button';
+import OrdenVisual from './OrdenVisual';
 import { useOrdenCompra } from '../../hooks/useOrdenCompra';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { EMPRESA_CONFIG } from '../../utils/constants';
 
-const GenerarOrden = ({ formData, onGenerarOrden }) => {
+const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
   const { resumenItems, calcularTotal } = useOrdenCompra();
   const [isGenerating, setIsGenerating] = useState(false);
   const [ordenGenerada, setOrdenGenerada] = useState('');
+  const [mostrarVistaVisual, setMostrarVistaVisual] = useState(false);
 
   const generarOrdenCompra = async () => {
     setIsGenerating(true);
@@ -23,10 +25,11 @@ const GenerarOrden = ({ formData, onGenerarOrden }) => {
       // Simular delay de generación
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const total = calcularTotal();
-      const orden = crearOrdenCompra(formData, resumenItems, total);
+      const totalCalculado = total || calcularTotal();
+      const orden = crearOrdenCompra(formData, resumenItems, totalCalculado);
       
       setOrdenGenerada(orden);
+      setMostrarVistaVisual(true);
       onGenerarOrden(orden);
     } catch (error) {
       console.error('Error generando orden:', error);
@@ -250,32 +253,39 @@ Las Asambleas de Dios del Perú`;
             </div>
 
             {/* Vista previa de la orden */}
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900">Vista Previa de la Orden</h4>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
-                <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap">
-                  {ordenGenerada}
-                </pre>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-gray-900">Vista Previa de la Orden</h4>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMostrarVistaVisual(!mostrarVistaVisual)}
+                  >
+                    {mostrarVistaVisual ? 'Ver Texto' : 'Ver Visual'}
+                  </Button>
+                </div>
               </div>
+              
+              {mostrarVistaVisual ? (
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <OrdenVisual 
+                    formData={formData}
+                    items={items}
+                    total={total}
+                  />
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                  <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap">
+                    {ordenGenerada}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Información adicional */}
-        <div className="bg-gradient-to-r from-accent-50 to-primary-50 rounded-lg p-4 border border-accent-200">
-          <div className="flex items-start space-x-3">
-            <DocumentTextIcon className="w-5 h-5 text-accent-600 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-medium text-accent-900 mb-1">
-                Documento Profesional
-              </h4>
-              <p className="text-xs text-accent-700">
-                La orden generada incluye toda la información necesaria para el procesamiento 
-                y cumple con los estándares de documentación empresarial.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

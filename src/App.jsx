@@ -138,6 +138,8 @@ const App = () => {
                 <GenerarOrden 
                   formData={formData} 
                   onGenerarOrden={handleGenerarOrden}
+                  items={items}
+                  total={total}
                 />
               </div>
             )}

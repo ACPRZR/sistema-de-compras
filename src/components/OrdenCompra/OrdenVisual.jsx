@@ -1,0 +1,268 @@
+import React from 'react';
+import { 
+  DocumentTextIcon, 
+  CurrencyDollarIcon,
+  ClipboardDocumentListIcon,
+  BuildingStorefrontIcon,
+  CalendarIcon,
+  MapPinIcon,
+  UserIcon,
+  BuildingOffice2Icon
+} from '@heroicons/react/24/outline';
+import { formatCurrency, formatDate } from '../../utils/formatters';
+import { EMPRESA_CONFIG } from '../../utils/constants';
+
+const OrdenVisual = ({ formData, items, total }) => {
+  // Calcular resumen de items
+  const resumenItems = Object.values(items)
+    .filter(item => item.descripcion && item.descripcion.trim() !== '')
+    .map(item => ({
+      ...item,
+      subtotalFormatted: formatCurrency(item.subtotal)
+    }));
+
+  const getUnidadNegocioTexto = (unidad) => {
+    const unidades = {
+      'oficina_nacional': 'Oficina Nacional',
+      'logistica': 'Logística',
+      'legal': 'Legal',
+      'sistemas': 'Sistemas',
+      'mantenimiento': 'Mantenimiento'
+    };
+    return unidades[unidad] || 'No especificada';
+  };
+
+  const getTipoOCTexto = (tipo) => {
+    return tipo === 'blanket' ? 'Orden Marco (Blanket)' : 'Orden Estándar';
+  };
+
+  const fechaEmision = new Date().toLocaleDateString('es-PE');
+  const fechaRequerimiento = formData.fechaRequerimiento ? 
+    formatDate(formData.fechaRequerimiento) : 'No especificada';
+
+  return (
+    <div className="space-y-6">
+      {/* Header de la empresa */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-6 text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Las Asambleas de Dios del Perú</h1>
+          <p className="text-sm font-medium italic">"{EMPRESA_CONFIG.lema}"</p>
+        </div>
+      </div>
+
+      {/* Título de la orden */}
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">ORDEN DE COMPRA</h2>
+        <div className="w-24 h-1 bg-primary-600 mx-auto rounded"></div>
+      </div>
+
+      {/* Información principal de la orden */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <DocumentTextIcon className="w-5 h-5 text-primary-600" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Número de OC</p>
+              <p className="text-lg font-mono font-semibold text-primary-600">
+                {formData.numeroOC || 'OC-2025-01-001'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <CalendarIcon className="w-5 h-5 text-accent-600" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Fecha de Emisión</p>
+              <p className="text-sm text-gray-700">{fechaEmision}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <BuildingStorefrontIcon className="w-5 h-5 text-accent-600" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Proveedor</p>
+              <p className="text-sm text-gray-700">
+                {formData.proveedor || 'No seleccionado'}
+              </p>
+              {formData.rucProveedor && (
+                <p className="text-xs text-secondary-500">
+                  RUC: {formData.rucProveedor}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <CurrencyDollarIcon className="w-5 h-5 text-success-600" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Total General</p>
+              <p className="text-2xl font-bold text-success-600">
+                {formatCurrency(total)}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <ClipboardDocumentListIcon className="w-5 h-5 text-warning-600" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Items</p>
+              <p className="text-sm text-gray-700">
+                {resumenItems.length} item(s) con descripción
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <BuildingOffice2Icon className="w-5 h-5 text-info-600" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Tipo de Orden</p>
+              <p className="text-sm text-gray-700">{getTipoOCTexto(formData.tipoOC)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Detalles de la orden */}
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-900 text-lg border-b border-gray-200 pb-2">
+          Información de la Orden
+        </h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="text-secondary-600">Unidad de Negocio:</p>
+            <p className="font-medium">{getUnidadNegocioTexto(formData.unidadNegocio)}</p>
+          </div>
+          
+          <div>
+            <p className="text-secondary-600">Categoría:</p>
+            <p className="font-medium">{formData.categoriaCompra?.toUpperCase() || 'No especificada'}</p>
+          </div>
+          
+          <div>
+            <p className="text-secondary-600">Fecha de Requerimiento:</p>
+            <p className="font-medium">{fechaRequerimiento}</p>
+          </div>
+          
+          <div>
+            <p className="text-secondary-600">Ubicación de Entrega:</p>
+            <p className="font-medium">{formData.ubicacionEntrega || 'No especificada'}</p>
+          </div>
+          
+          <div>
+            <p className="text-secondary-600">Lugar de Entrega:</p>
+            <p className="font-medium">{formData.lugarEntrega || 'No especificado'}</p>
+          </div>
+          
+          <div className="md:col-span-2">
+            <p className="text-secondary-600">Detalles del Proyecto:</p>
+            <p className="font-medium">{formData.datosProyecto || 'No especificado'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Lista de items */}
+      {resumenItems.length > 0 && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900 text-lg border-b border-gray-200 pb-2">
+            Detalle de Items Solicitados
+          </h4>
+          
+          <div className="space-y-2">
+            {resumenItems.map((item, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg border border-secondary-200">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{item.descripcion}</p>
+                  <p className="text-sm text-secondary-600">
+                    {item.cantidad} {item.unidad} × {formatCurrency(item.precio)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(item.subtotal)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Condiciones comerciales */}
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-900 text-lg border-b border-gray-200 pb-2">
+          Condiciones Comerciales
+        </h4>
+        
+        <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-secondary-600">Condiciones de Pago:</span>
+            <span className="font-medium">{formData.condicionesPago || 'Contado'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-secondary-600">Lugar de Entrega:</span>
+            <span className="font-medium">{formData.lugarEntrega || 'No especificado'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-secondary-600">Precios incluyen IGV:</span>
+            <span className="font-medium">Sí</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Encargado de compra */}
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-900 text-lg border-b border-gray-200 pb-2">
+          Encargado de Compra
+        </h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center space-x-3">
+            <UserIcon className="w-5 h-5 text-primary-600" />
+            <div>
+              <p className="text-secondary-600">Responsable:</p>
+              <p className="font-medium">Álvaro Pérez Román</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <BuildingOffice2Icon className="w-5 h-5 text-primary-600" />
+            <div>
+              <p className="text-secondary-600">Cargo:</p>
+              <p className="font-medium">Departamento de Logística</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Resumen final */}
+      <div className="bg-gradient-to-r from-success-50 to-accent-50 rounded-lg p-6 border border-success-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-semibold text-success-900 text-lg">Orden de Compra Generada</h4>
+            <p className="text-sm text-success-700">
+              Documento listo para procesamiento
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-success-600">
+              {formatCurrency(total)}
+            </p>
+            <p className="text-sm text-success-700">Total final</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Información de contacto */}
+      <div className="bg-gray-100 rounded-lg p-4 text-center text-sm text-gray-600">
+        <p><strong>Dirección:</strong> {EMPRESA_CONFIG.direccion}</p>
+        <p><strong>Teléfonos:</strong> {EMPRESA_CONFIG.telefono}</p>
+        <p><strong>Correo Electrónico:</strong> {EMPRESA_CONFIG.email}</p>
+      </div>
+    </div>
+  );
+};
+
+export default OrdenVisual;
