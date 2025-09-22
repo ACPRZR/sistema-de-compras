@@ -112,9 +112,29 @@ class OrdenCompra {
 
     // Aplicar filtros
     if (filters.estado_id) {
-      text += ` AND oc.estado_id = $${paramCount}`;
-      values.push(filters.estado_id);
-      paramCount++;
+      const estadoIdStr = String(filters.estado_id);
+      console.log('🔍 Filtro estado_id:', estadoIdStr);
+      
+      if (estadoIdStr.includes(',')) {
+        const estadoIds = estadoIdStr.split(',').map(id => parseInt(id.trim()));
+        console.log('🔍 Estado IDs:', estadoIds);
+        
+        // Construir placeholders manualmente
+        const placeholders = estadoIds.map((_, index) => `$${paramCount + index}`).join(',');
+        console.log('🔍 Placeholders:', placeholders);
+        console.log('🔍 Values antes:', values);
+        
+        text += ` AND oc.estado_id IN (${placeholders})`;
+        values.push(...estadoIds);
+        paramCount += estadoIds.length;
+        
+        console.log('🔍 Values después:', values);
+        console.log('🔍 paramCount después:', paramCount);
+      } else {
+        text += ` AND oc.estado_id = $${paramCount}`;
+        values.push(parseInt(filters.estado_id));
+        paramCount++;
+      }
     }
 
     if (filters.categoria_id) {

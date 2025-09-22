@@ -78,10 +78,10 @@ class ApiService {
   }
 
   // Actualizar orden
-  async updateOrden(id, updateData) {
+  async updateOrden(id, ordenData) {
     return this.request(`/ordenes/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updateData),
+      body: JSON.stringify(ordenData),
     });
   }
 
