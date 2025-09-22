@@ -13,6 +13,7 @@ const ordenesRoutes = require('./routes/ordenes');
 const proveedoresRoutes = require('./routes/proveedores');
 const categoriasRoutes = require('./routes/categorias');
 const unidadesMedidaRoutes = require('./routes/unidades-medida');
+const pdfRoutes = require('./routes/pdf');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -114,6 +115,7 @@ app.use('/api/ordenes', ordenesRoutes);
 app.use('/api/proveedores', proveedoresRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/unidades-medida', unidadesMedidaRoutes);
+app.use('/api/pdf', pdfRoutes);
 
 // =====================================================
 // MANEJO DE ERRORES

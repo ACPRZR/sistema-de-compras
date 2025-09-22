@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   DocumentTextIcon, 
-  ClipboardDocumentListIcon,
   ArrowDownTrayIcon,
   EnvelopeIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
+import html2canvas from 'html2canvas';
 import Button from '../UI/Button';
 import OrdenVisual from './OrdenVisual';
 import { useOrdenCompraDB } from '../../hooks/useOrdenCompraDB';
@@ -17,6 +17,7 @@ const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [ordenGenerada, setOrdenGenerada] = useState('');
   const [mostrarVistaVisual, setMostrarVistaVisual] = useState(false);
+  const visualRef = useRef(null);
 
   const generarOrdenCompra = async () => {
     setIsGenerating(true);
@@ -134,25 +135,79 @@ Fecha: ${fechaEmision}             Fecha: ___________
                       Correo Electrónico: ${EMPRESA_CONFIG.email}`;
   };
 
-  const copiarOrden = async () => {
-    try {
-      await navigator.clipboard.writeText(ordenGenerada);
-      // Aquí podrías mostrar una notificación de éxito
-    } catch (error) {
-      console.error('Error copiando orden:', error);
-    }
-  };
 
-  const descargarOrden = () => {
-    const blob = new Blob([ordenGenerada], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${formData.numeroOC || 'OC-2025-01-001'}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const descargarOrden = async () => {
+    try {
+      // Capturar la vista visual como imagen
+      if (!visualRef.current) {
+        throw new Error('No se puede capturar la vista previa');
+      }
+
+      const canvas = await html2canvas(visualRef.current, {
+        scale: 2, // Mayor calidad
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Convertir canvas a base64
+      const imageData = canvas.toDataURL('image/png');
+
+      // Preparar datos para el PDF
+      const ordenData = {
+        numero_oc: formData.numeroOC || 'OC-2025-01-001',
+        fecha_requerimiento: formData.fechaRequerimiento,
+        categoria_nombre: formData.categoriaCompra?.toUpperCase() || 'NO ESPECIFICADA',
+        tipo_oc_id: formData.tipoOC === 'blanket' ? 2 : 1,
+        proveedor_nombre: formData.proveedor || 'No especificado',
+        proveedor_ruc: formData.rucProveedor || 'No especificado',
+        proveedor_contacto: formData.contactoProveedor || 'No especificado',
+        proveedor_telefono: formData.telefonoProveedor || 'No especificado',
+        proveedor_email: formData.emailProveedor || 'No especificado',
+        lugar_entrega: formData.lugarEntrega || 'No especificado',
+        condiciones_pago_nombre: formData.condicionesPago || 'Contado'
+      };
+
+      // Preparar items para el PDF
+      const itemsData = Object.values(items).map(item => ({
+        descripcion: item.descripcion,
+        cantidad: item.cantidad,
+        unidad: item.unidad,
+        precio: item.precio,
+        subtotal: item.subtotal
+      }));
+
+      // Llamar al endpoint de PDF con imagen
+      const response = await fetch('http://localhost:3001/api/pdf/orden', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ordenData,
+          items: itemsData,
+          visualPreview: imageData // Enviar la imagen capturada
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error generando PDF');
+      }
+
+      // Descargar el PDF
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${formData.numeroOC || 'OC-2025-01-001'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error descargando PDF:', error);
+      alert('Error al generar el PDF. Inténtalo de nuevo.');
+    }
   };
 
   const enviarEmail = () => {
@@ -203,12 +258,12 @@ Las Asambleas de Dios del Perú`;
             icon={DocumentTextIcon}
             className="px-8 py-4 text-lg"
           >
-            {isGenerating ? 'Generando Orden...' : 'Generar Orden de Compra'}
+            {isGenerating ? 'Guardando Orden...' : 'Guardar y Generar Orden'}
           </Button>
           
           {isGenerating && (
             <p className="text-sm text-secondary-600 mt-2">
-              Procesando información y generando documento...
+              Guardando en la base de datos y generando documento...
             </p>
           )}
         </div>
@@ -219,28 +274,25 @@ Las Asambleas de Dios del Perú`;
             <div className="bg-success-50 border border-success-200 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <CheckCircleIcon className="w-5 h-5 text-success-600" />
-                <span className="font-medium text-success-900">
-                  ¡Orden generada exitosamente!
-                </span>
+                <div>
+                  <span className="font-medium text-success-900">
+                    ¡Orden guardada exitosamente!
+                  </span>
+                  <p className="text-sm text-success-700 mt-1">
+                    La orden ha sido guardada en la base de datos y está lista para enviar al proveedor.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Acciones disponibles */}
             <div className="flex flex-wrap gap-3">
               <Button
-                variant="success"
-                onClick={copiarOrden}
-                icon={ClipboardDocumentListIcon}
-              >
-                Copiar Orden
-              </Button>
-              
-              <Button
                 variant="secondary"
                 onClick={descargarOrden}
                 icon={ArrowDownTrayIcon}
               >
-                Descargar TXT
+                Descargar Orden
               </Button>
               
               <Button
@@ -248,7 +300,7 @@ Las Asambleas de Dios del Perú`;
                 onClick={enviarEmail}
                 icon={EnvelopeIcon}
               >
-                Enviar por Email
+                Enviar al Proveedor
               </Button>
             </div>
 
@@ -269,11 +321,13 @@ Las Asambleas de Dios del Perú`;
               
               {mostrarVistaVisual ? (
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <OrdenVisual 
-                    formData={formData}
-                    items={items}
-                    total={total}
-                  />
+                  <div ref={visualRef}>
+                    <OrdenVisual 
+                      formData={formData}
+                      items={items}
+                      total={total}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
