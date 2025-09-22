@@ -2,15 +2,15 @@ import React, { useState, useCallback } from 'react';
 import Layout from './components/Layout/Layout';
 import InformacionOrganizacional from './components/Forms/InformacionOrganizacional';
 import InformacionGeneral from './components/Forms/InformacionGeneral';
-import InformacionProveedor from './components/Forms/InformacionProveedor';
-import ItemsOrden from './components/Forms/ItemsOrden';
+import InformacionProveedorDB from './components/Forms/InformacionProveedorDB';
+import ItemsOrdenDB from './components/Forms/ItemsOrdenDB';
 import Timeline from './components/Timeline/Timeline';
 import ResumenOrden from './components/OrdenCompra/ResumenOrden';
 import GenerarOrden from './components/OrdenCompra/GenerarOrden';
 import OrdenesPendientes from './components/Pages/OrdenesPendientes';
 import Historial from './components/Pages/Historial';
 import Reportes from './components/Pages/Reportes';
-import { useOrdenCompra } from './hooks/useOrdenCompra';
+import { useOrdenCompraDB } from './hooks/useOrdenCompraDB';
 import { useTimeline } from './hooks/useTimeline';
 
 const App = () => {
@@ -51,8 +51,12 @@ const App = () => {
     actualizarItem, 
     eliminarItem, 
     calcularTotal, 
-    resumenItems 
-  } = useOrdenCompra();
+    resumenItems,
+    loading,
+    error,
+    guardarOrden,
+    generarNumeroOC
+  } = useOrdenCompraDB();
   const { actualizarComprador } = useTimeline();
 
   const handleFormChange = useCallback((field, value) => {
@@ -67,9 +71,40 @@ const App = () => {
     }
   }, [actualizarComprador]);
 
-  const handleGenerarOrden = (orden) => {
-    // Orden generada - se puede usar para logging o futuras funcionalidades
-    console.log('Orden generada:', orden);
+  const handleGenerarOrden = async (orden) => {
+    try {
+      // Guardar orden en la base de datos
+      const ordenData = {
+        numero_oc: formData.numeroOC || await generarNumeroOC(),
+        fecha_requerimiento: formData.fechaRequerimiento || new Date().toISOString().split('T')[0],
+        categoria_id: 1, // Categoría por defecto
+        tipo_oc_id: 1, // Tipo estándar por defecto
+        estado_id: 1, // Estado "Creada" por defecto
+        prioridad_id: 1, // Prioridad "Normal" por defecto
+        unidad_negocio_id: 1, // Unidad de negocio por defecto
+        unidad_autoriza_id: 1, // Unidad autorizadora por defecto
+        ubicacion_entrega_id: 1, // Ubicación por defecto
+        lugar_entrega: formData.lugarEntrega || 'Oficina Principal',
+        datos_proyecto: formData.datosProyecto || 'Proyecto General',
+        proveedor_nombre: formData.proveedor || 'Proveedor Genérico',
+        proveedor_ruc: formData.rucProveedor || '12345678901',
+        proveedor_contacto: formData.contactoProveedor || 'Contacto',
+        proveedor_telefono: formData.telefonoProveedor || '999999999',
+        proveedor_email: formData.emailProveedor || 'proveedor@email.com',
+        condiciones_pago_id: 1, // Condiciones por defecto
+        comprador_responsable_id: 1, // Comprador por defecto
+        total: calcularTotal()
+      };
+
+      const ordenGuardada = await guardarOrden(ordenData);
+      console.log('Orden guardada en BD:', ordenGuardada);
+      
+      // Mostrar mensaje de éxito
+      alert('Orden de compra guardada exitosamente en la base de datos');
+    } catch (err) {
+      console.error('Error guardando orden:', err);
+      alert('Error al guardar la orden: ' + err.message);
+    }
   };
 
   const handleNavigate = (page) => {
@@ -106,13 +141,13 @@ const App = () => {
               onFormChange={handleFormChange} 
             />
             
-            <InformacionProveedor 
+            <InformacionProveedorDB 
               formData={formData} 
               onFormChange={handleFormChange}
               categoriaCompra={formData.categoriaCompra}
             />
             
-            <ItemsOrden 
+            <ItemsOrdenDB 
               categoriaCompra={formData.categoriaCompra}
               items={items}
               contadorItems={contadorItems}
@@ -142,8 +177,41 @@ const App = () => {
               </div>
             )}
 
+            {/* Indicadores de estado */}
+            {loading && (
+              <div className="mt-8">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 text-center">
+                  <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-primary-900 mb-2">
+                    Procesando...
+                  </h3>
+                  <p className="text-primary-700">
+                    Guardando orden en la base de datos
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-8">
+                <div className="bg-danger-50 border border-danger-200 rounded-lg p-6 text-center">
+                  <div className="w-12 h-12 bg-danger-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">❌</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-danger-900 mb-2">
+                    Error
+                  </h3>
+                  <p className="text-danger-700">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Mensaje de campos requeridos */}
-            {!hasRequiredFields && (
+            {!hasRequiredFields && !loading && (
               <div className="mt-8">
                 <div className="bg-warning-50 border border-warning-200 rounded-lg p-6 text-center">
                   <div className="w-12 h-12 bg-warning-100 rounded-full flex items-center justify-center mx-auto mb-4">

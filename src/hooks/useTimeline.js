@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { useLocalStorage } from './useLocalStorage';
 
 /**
  * Hook para manejar el timeline de estados de la orden
@@ -51,7 +50,7 @@ export const useTimeline = () => {
     return nuevosDatos;
   };
 
-  const [timelineData, setTimelineData] = useLocalStorage('timeline_data', migrarDatosTimeline);
+  const [timelineData, setTimelineData] = useState(migrarDatosTimeline);
 
   const estados = useMemo(() => ['creada', 'lista', 'completada'], []);
 

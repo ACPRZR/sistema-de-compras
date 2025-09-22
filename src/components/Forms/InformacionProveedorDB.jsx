@@ -11,22 +11,58 @@ import {
 import Select from '../UI/Select';
 import Input from '../UI/Input';
 import Button from '../UI/Button';
-import { getProveedoresByCategoria } from '../../data/proveedores';
-import { validateRUC, validateEmail, formatRUC, formatPhone } from '../../utils/formatters';
+import apiService from '../../services/api';
 
-const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
+const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => {
   const [proveedores, setProveedores] = useState([]);
   const [showContacto, setShowContacto] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  
 
-  // Cargar proveedores cuando cambie la categoría
+  // Mapeo de códigos de categoría a IDs de la base de datos
+  const mapeoCategoriaId = {
+    'tecnologia': 1,
+    'oficina': 2,
+    'limpieza': 3,
+    'mantenimiento': 4,
+    'audiovisuales': 5,
+    'mobiliario': 6,
+    'servicios': 7,
+    'otros': 8
+  };
+
+  // Cargar proveedores filtrados por categoría
   useEffect(() => {
-    if (categoriaCompra) {
-      const proveedoresCategoria = getProveedoresByCategoria(categoriaCompra);
-      setProveedores(proveedoresCategoria);
-    } else {
-      setProveedores([]);
-    }
+    const loadProveedores = async () => {
+      if (!categoriaCompra) {
+        setProveedores([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const result = await apiService.getProveedores();
+        const todosProveedores = result.data || [];
+        
+        // Obtener ID de categoría desde el mapeo
+        const categoriaId = mapeoCategoriaId[categoriaCompra];
+        
+        // Filtrar proveedores por categoría
+        const proveedoresFiltrados = todosProveedores.filter(proveedor => 
+          proveedor.categoria_id === categoriaId
+        );
+        
+        setProveedores(proveedoresFiltrados);
+      } catch (error) {
+        console.error('Error cargando proveedores:', error);
+        setProveedores([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProveedores();
   }, [categoriaCompra]);
 
   const handleProveedorChange = (proveedorData) => {
@@ -61,11 +97,11 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
   };
 
   const handleRUCChange = (ruc) => {
-    const formattedRUC = formatRUC(ruc);
+    const formattedRUC = ruc.replace(/\D/g, '');
     onFormChange('rucProveedor', formattedRUC);
     
     // Validar RUC
-    if (formattedRUC && !validateRUC(formattedRUC)) {
+    if (formattedRUC && formattedRUC.length !== 11) {
       setErrors(prev => ({ ...prev, ruc: 'RUC inválido' }));
     } else {
       setErrors(prev => ({ ...prev, ruc: null }));
@@ -76,7 +112,7 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
     onFormChange('emailProveedor', email);
     
     // Validar email
-    if (email && !validateEmail(email)) {
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErrors(prev => ({ ...prev, email: 'Email inválido' }));
     } else {
       setErrors(prev => ({ ...prev, email: null }));
@@ -84,18 +120,41 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
   };
 
   const handleTelefonoChange = (telefono) => {
-    const formattedPhone = formatPhone(telefono);
-    onFormChange('telefonoProveedor', formattedPhone);
+    const formattedPhone = telefono.replace(/\D/g, '');
+    if (formattedPhone.length === 9) {
+      const formatted = formattedPhone.replace(/(\d{3})(\d{3})(\d{3})/, '$1-$2-$3');
+      onFormChange('telefonoProveedor', formatted);
+    } else {
+      onFormChange('telefonoProveedor', telefono);
+    }
   };
 
-  const agregarProveedorRapido = () => {
+  const agregarProveedorRapido = async () => {
     const nombre = prompt('Nombre del proveedor:');
-    if (nombre) {
-      const ruc = prompt('RUC del proveedor:') || '';
-      const contacto = prompt('Contacto:') || '';
-      const telefono = prompt('Teléfono:') || '';
-      const email = prompt('Email:') || '';
+    if (!nombre) return;
+    
+    const ruc = prompt('RUC del proveedor:') || '';
+    const contacto = prompt('Contacto:') || '';
+    const telefono = prompt('Teléfono:') || '';
+    const email = prompt('Email:') || '';
+    
+    try {
+      const proveedorData = {
+        ruc,
+        nombre,
+        contacto,
+        telefono,
+        email,
+        categoria_id: mapeoCategoriaId[categoriaCompra] || 1, // Usar categoría seleccionada
+        activo: true
+      };
       
+      const result = await apiService.createProveedor(proveedorData);
+      
+      // Actualizar lista de proveedores
+      setProveedores(prev => [...prev, result.data]);
+      
+      // Completar formulario
       onFormChange('proveedor', nombre);
       onFormChange('rucProveedor', ruc);
       onFormChange('contactoProveedor', contacto);
@@ -105,6 +164,9 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
       if (contacto || telefono || email) {
         setShowContacto(true);
       }
+    } catch (error) {
+      console.error('Error creando proveedor:', error);
+      alert('Error creando proveedor: ' + error.message);
     }
   };
 
@@ -146,11 +208,15 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
               options={opcionesProveedores}
               placeholder="Seleccione proveedor"
               required
+              disabled={loading}
             />
-            {categoriaCompra && proveedores.length > 0 && (
+            {proveedores.length > 0 && (
               <p className="text-xs text-secondary-500">
-                {proveedores.length} proveedor(es) disponible(s) para esta categoría
+                {proveedores.length} proveedor(es) disponible(s)
               </p>
+            )}
+            {loading && (
+              <p className="text-xs text-blue-500">Cargando proveedores...</p>
             )}
           </div>
           
@@ -236,4 +302,4 @@ const InformacionProveedor = ({ formData, onFormChange, categoriaCompra }) => {
   );
 };
 
-export default InformacionProveedor;
+export default InformacionProveedorDB;

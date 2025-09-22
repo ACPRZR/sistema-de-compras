@@ -8,12 +8,12 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '../UI/Button';
 import OrdenVisual from './OrdenVisual';
-import { useOrdenCompra } from '../../hooks/useOrdenCompra';
+import { useOrdenCompraDB } from '../../hooks/useOrdenCompraDB';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { EMPRESA_CONFIG } from '../../utils/constants';
 
 const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
-  const { resumenItems, calcularTotal } = useOrdenCompra();
+  const { resumenItems, calcularTotal } = useOrdenCompraDB();
   const [isGenerating, setIsGenerating] = useState(false);
   const [ordenGenerada, setOrdenGenerada] = useState('');
   const [mostrarVistaVisual, setMostrarVistaVisual] = useState(false);
