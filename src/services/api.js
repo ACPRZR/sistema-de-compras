@@ -288,6 +288,138 @@ class ApiService {
   async getConfiguracionEmpresa() {
     return this.request('/configuracion');
   }
+
+  // =====================================================
+  // MÉTODOS PARA REPORTES
+  // =====================================================
+
+  // Dashboard de reportes
+  async getReportesDashboard(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/dashboard?${queryString}` : '/reportes/dashboard';
+    
+    return this.request(endpoint);
+  }
+
+  // Tendencias de reportes
+  async getReportesTendencias(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/tendencias?${queryString}` : '/reportes/tendencias';
+    
+    return this.request(endpoint);
+  }
+
+  // Análisis de categorías
+  async getReportesCategorias(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/categorias?${queryString}` : '/reportes/categorias';
+    
+    return this.request(endpoint);
+  }
+
+  // Análisis de proveedores
+  async getReportesProveedores(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/proveedores?${queryString}` : '/reportes/proveedores';
+    
+    return this.request(endpoint);
+  }
+
+  // Análisis de unidades de negocio
+  async getReportesUnidadesNegocio(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/unidades-negocio?${queryString}` : '/reportes/unidades-negocio';
+    
+    return this.request(endpoint);
+  }
+
+  // Análisis de eficiencia
+  async getReportesEficiencia(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/eficiencia?${queryString}` : '/reportes/eficiencia';
+    
+    return this.request(endpoint);
+  }
+
+  // Resumen ejecutivo
+  async getReportesResumenEjecutivo(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/resumen-ejecutivo?${queryString}` : '/reportes/resumen-ejecutivo';
+    
+    return this.request(endpoint);
+  }
+
+  // Proyecciones
+  async getReportesProyecciones(filtros = {}) {
+    const queryParams = new URLSearchParams();
+    
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== undefined && filtros[key] !== '') {
+        queryParams.append(key, filtros[key]);
+      }
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/reportes/proyecciones?${queryString}` : '/reportes/proyecciones';
+    
+    return this.request(endpoint);
+  }
 }
 
 // Crear instancia singleton

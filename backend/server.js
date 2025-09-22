@@ -14,6 +14,7 @@ const proveedoresRoutes = require('./routes/proveedores');
 const categoriasRoutes = require('./routes/categorias');
 const unidadesMedidaRoutes = require('./routes/unidades-medida');
 const pdfRoutes = require('./routes/pdf');
+const reportesRoutes = require('./routes/reportes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,19 +43,19 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // límite de 100 requests por ventana
-  message: {
-    success: false,
-    message: 'Demasiadas solicitudes, intenta de nuevo más tarde'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiting - Deshabilitado temporalmente para debug
+// const limiter = rateLimit({
+//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minuto
+//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // límite de 1000 requests por minuto
+//   message: {
+//     success: false,
+//     message: 'Demasiadas solicitudes, intenta de nuevo más tarde'
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
 
-app.use(limiter);
+// app.use(limiter);
 
 // =====================================================
 // MIDDLEWARES GENERALES
@@ -116,6 +117,7 @@ app.use('/api/proveedores', proveedoresRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/unidades-medida', unidadesMedidaRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/reportes', reportesRoutes);
 
 // =====================================================
 // MANEJO DE ERRORES
@@ -188,6 +190,14 @@ const startServer = async () => {
       console.log('   - POST /api/ordenes');
       console.log('   - GET  /api/proveedores');
       console.log('   - POST /api/proveedores');
+      console.log('   - GET  /api/reportes/dashboard');
+      console.log('   - GET  /api/reportes/tendencias');
+      console.log('   - GET  /api/reportes/categorias');
+      console.log('   - GET  /api/reportes/proveedores');
+      console.log('   - GET  /api/reportes/unidades-negocio');
+      console.log('   - GET  /api/reportes/eficiencia');
+      console.log('   - GET  /api/reportes/resumen-ejecutivo');
+      console.log('   - GET  /api/reportes/proyecciones');
     });
   } catch (error) {
     console.error('❌ Error iniciando el servidor:', error);

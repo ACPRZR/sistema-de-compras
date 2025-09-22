@@ -9,6 +9,7 @@ const Select = forwardRef(({
   options = [],
   placeholder = 'Seleccione una opción',
   className = '',
+  onChange,
   ...props 
 }, ref) => {
   return (
@@ -30,6 +31,19 @@ const Select = forwardRef(({
               : 'border-secondary-300 text-gray-900 focus:ring-primary-500 focus:border-primary-500',
             className
           )}
+          onChange={(e) => {
+            console.log('Select onChange event:', e);
+            if (onChange) {
+              if (e && e.target && e.target.value !== undefined) {
+                onChange(e.target.value);
+              } else if (typeof e === 'string') {
+                // Si el evento es directamente un string (valor)
+                onChange(e);
+              } else {
+                console.warn('Select onChange: Invalid event structure', e);
+              }
+            }
+          }}
           {...props}
         >
           {placeholder && (

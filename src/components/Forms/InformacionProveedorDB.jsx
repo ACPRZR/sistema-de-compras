@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BuildingStorefrontIcon, 
   PhoneIcon, 
@@ -6,7 +6,8 @@ import {
   UserIcon,
   PlusIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import Select from '../UI/Select';
 import Input from '../UI/Input';
@@ -15,13 +16,23 @@ import apiService from '../../services/api';
 
 const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => {
   const [proveedores, setProveedores] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [showContacto, setShowContacto] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [nuevoProveedor, setNuevoProveedor] = useState({
+    nombre: '',
+    ruc: '',
+    contacto: '',
+    telefono: '',
+    email: '',
+    categoria_id: ''
+  });
   
 
   // Mapeo de códigos de categoría a IDs de la base de datos
-  const mapeoCategoriaId = {
+  const mapeoCategoriaId = useMemo(() => ({
     'tecnologia': 1,
     'oficina': 2,
     'limpieza': 3,
@@ -30,7 +41,25 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
     'mobiliario': 6,
     'servicios': 7,
     'otros': 8
-  };
+  }), []);
+
+  // Cargar categorías
+  useEffect(() => {
+    const loadCategorias = async () => {
+      try {
+        console.log('🔍 Cargando categorías...');
+        const result = await apiService.getCategorias();
+        console.log('📊 Respuesta de categorías:', result);
+        setCategorias(result.data || []);
+        console.log('✅ Categorías cargadas:', result.data || []);
+      } catch (error) {
+        console.error('❌ Error cargando categorías:', error);
+        setCategorias([]);
+      }
+    };
+
+    loadCategorias();
+  }, []);
 
   // Cargar proveedores filtrados por categoría
   useEffect(() => {
@@ -63,7 +92,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
     };
 
     loadProveedores();
-  }, [categoriaCompra]);
+  }, [categoriaCompra, mapeoCategoriaId]);
 
   const handleProveedorChange = (proveedorData) => {
     if (proveedorData === 'nuevo') {
@@ -129,44 +158,107 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
     }
   };
 
-  const agregarProveedorRapido = async () => {
-    const nombre = prompt('Nombre del proveedor:');
-    if (!nombre) return;
+  const abrirModalProveedor = () => {
+    const categoriaId = mapeoCategoriaId[categoriaCompra] || '';
+    setNuevoProveedor({
+      nombre: '',
+      ruc: '',
+      contacto: '',
+      telefono: '',
+      email: '',
+      categoria_id: categoriaId
+    });
+    setErrors({});
+    setShowModal(true);
+  };
+
+  const cerrarModal = () => {
+    setShowModal(false);
+    setNuevoProveedor({
+      nombre: '',
+      ruc: '',
+      contacto: '',
+      telefono: '',
+      email: '',
+      categoria_id: ''
+    });
+    setErrors({});
+  };
+
+  const handleNuevoProveedorChange = (field, value) => {
+    console.log('handleNuevoProveedorChange:', field, value);
+    setNuevoProveedor(prev => ({ ...prev, [field]: value }));
+    // Limpiar error del campo
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validarProveedor = () => {
+    const newErrors = {};
     
-    const ruc = prompt('RUC del proveedor:') || '';
-    const contacto = prompt('Contacto:') || '';
-    const telefono = prompt('Teléfono:') || '';
-    const email = prompt('Email:') || '';
+    if (!nuevoProveedor.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido';
+    }
     
+    if (!nuevoProveedor.categoria_id) {
+      newErrors.categoria_id = 'La categoría es requerida';
+    }
+    
+    if (nuevoProveedor.ruc && !/^\d{11}$/.test(nuevoProveedor.ruc)) {
+      newErrors.ruc = 'El RUC debe tener 11 dígitos';
+    }
+    
+    if (nuevoProveedor.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevoProveedor.email)) {
+      newErrors.email = 'Email inválido';
+    }
+    
+    if (nuevoProveedor.telefono && !/^[\d\s\-()\+]+$/.test(nuevoProveedor.telefono)) {
+      newErrors.telefono = 'Teléfono inválido';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const guardarProveedor = async () => {
+    if (!validarProveedor()) return;
+    
+    setLoading(true);
     try {
       const proveedorData = {
-        ruc,
-        nombre,
-        contacto,
-        telefono,
-        email,
-        categoria_id: mapeoCategoriaId[categoriaCompra] || 1, // Usar categoría seleccionada
+        ...nuevoProveedor,
+        categoria_id: parseInt(nuevoProveedor.categoria_id),
         activo: true
       };
       
       const result = await apiService.createProveedor(proveedorData);
       
-      // Actualizar lista de proveedores
-      setProveedores(prev => [...prev, result.data]);
-      
-      // Completar formulario
-      onFormChange('proveedor', nombre);
-      onFormChange('rucProveedor', ruc);
-      onFormChange('contactoProveedor', contacto);
-      onFormChange('telefonoProveedor', telefono);
-      onFormChange('emailProveedor', email);
-      
-      if (contacto || telefono || email) {
-        setShowContacto(true);
+      if (result.success) {
+        // Recargar proveedores
+        const updatedResult = await apiService.getProveedores();
+        const todosProveedores = updatedResult.data || [];
+        const categoriaId = mapeoCategoriaId[categoriaCompra];
+        const proveedoresFiltrados = todosProveedores.filter(p => p.categoria_id === categoriaId);
+        setProveedores(proveedoresFiltrados);
+        
+        // Seleccionar el nuevo proveedor
+        onFormChange('proveedor_id', result.data.id);
+        onFormChange('proveedor_nombre', result.data.nombre);
+        onFormChange('proveedor_ruc', result.data.ruc);
+        onFormChange('proveedor_contacto', result.data.contacto);
+        onFormChange('proveedor_telefono', result.data.telefono);
+        onFormChange('proveedor_email', result.data.email);
+        
+        cerrarModal();
+      } else {
+        setErrors({ general: result.error || 'Error al crear proveedor' });
       }
     } catch (error) {
-      console.error('Error creando proveedor:', error);
-      alert('Error creando proveedor: ' + error.message);
+      console.error('Error agregando proveedor:', error);
+      setErrors({ general: 'Error al crear proveedor' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,7 +296,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
                 JSON.stringify(proveedores.find(p => p.nombre === formData.proveedor)) : 
                 formData.proveedor || ''
               }
-              onChange={(e) => handleProveedorChange(e.target.value)}
+              onChange={(value) => handleProveedorChange(value)}
               options={opcionesProveedores}
               placeholder="Seleccione proveedor"
               required
@@ -236,10 +328,10 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
             <Button
               variant="secondary"
               size="sm"
-              onClick={agregarProveedorRapido}
+              onClick={abrirModalProveedor}
               icon={PlusIcon}
             >
-              Rápido
+              Nuevo
             </Button>
           </div>
         </div>
@@ -296,6 +388,120 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
             </div>
           )}
         </div>
+
+        {/* Modal para agregar nuevo proveedor */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Agregar Nuevo Proveedor
+                  </h3>
+                  <button
+                    onClick={cerrarModal}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {errors.general && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                      {errors.general}
+                    </div>
+                  )}
+
+                  <Input
+                    label="Nombre del Proveedor *"
+                    value={nuevoProveedor.nombre}
+                    onChange={(e) => handleNuevoProveedorChange('nombre', e.target.value)}
+                    placeholder="Ej: Empresa ABC S.A.C."
+                    error={errors.nombre}
+                    required
+                  />
+
+                  <Select
+                    label="Categoría de Compra *"
+                    value={nuevoProveedor.categoria_id}
+                    onChange={(value) => handleNuevoProveedorChange('categoria_id', value)}
+                    options={[
+                      { value: '', label: 'Seleccione categoría' },
+                      ...categorias.map(categoria => ({
+                        value: categoria.id.toString(),
+                        label: categoria.nombre
+                      }))
+                    ]}
+                    error={errors.categoria_id}
+                    leftIcon={TagIcon}
+                    required
+                  />
+                  {/* Debug info */}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Debug: {categorias.length} categorías disponibles
+                  </div>
+
+                  <Input
+                    label="RUC"
+                    value={nuevoProveedor.ruc}
+                    onChange={(e) => handleNuevoProveedorChange('ruc', e.target.value)}
+                    placeholder="12345678901"
+                    error={errors.ruc}
+                    maxLength={11}
+                  />
+
+                  <Input
+                    label="Contacto"
+                    value={nuevoProveedor.contacto}
+                    onChange={(e) => handleNuevoProveedorChange('contacto', e.target.value)}
+                    placeholder="Nombre del contacto"
+                    error={errors.contacto}
+                  />
+
+                  <Input
+                    label="Teléfono"
+                    value={nuevoProveedor.telefono}
+                    onChange={(e) => handleNuevoProveedorChange('telefono', e.target.value)}
+                    placeholder="999-888-777"
+                    error={errors.telefono}
+                  />
+
+                  <Input
+                    label="Email"
+                    type="email"
+                    value={nuevoProveedor.email}
+                    onChange={(e) => handleNuevoProveedorChange('email', e.target.value)}
+                    placeholder="contacto@empresa.com"
+                    error={errors.email}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={cerrarModal}
+                    disabled={loading}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={guardarProveedor}
+                    loading={loading}
+                    disabled={loading}
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Proveedor'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

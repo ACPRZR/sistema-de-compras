@@ -37,7 +37,7 @@ const InformacionOrganizacional = ({ formData, onFormChange }) => {
           <Select
             label="Unidad de Negocio"
             value={formData.unidadNegocio || ''}
-            onChange={(e) => handleChange('unidadNegocio', e.target.value)}
+            onChange={(value) => handleChange('unidadNegocio', value)}
             options={UNIDADES_NEGOCIO}
             placeholder="Seleccione unidad"
             required
@@ -46,7 +46,7 @@ const InformacionOrganizacional = ({ formData, onFormChange }) => {
           <Select
             label="Unidad que Autoriza"
             value={formData.unidadAutoriza || ''}
-            onChange={(e) => handleChange('unidadAutoriza', e.target.value)}
+            onChange={(value) => handleChange('unidadAutoriza', value)}
             options={UNIDADES_AUTORIZA}
             placeholder="Seleccione autorización"
             required
@@ -59,7 +59,7 @@ const InformacionOrganizacional = ({ formData, onFormChange }) => {
             <Select
               label="Ubicación de Entrega"
               value={formData.ubicacionEntrega || ''}
-              onChange={(e) => handleChange('ubicacionEntrega', e.target.value)}
+              onChange={(value) => handleChange('ubicacionEntrega', value)}
               options={UBICACIONES_ENTREGA}
               placeholder="Seleccione ubicación"
               required

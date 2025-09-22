@@ -17,6 +17,11 @@ async function generateOrderPdf(ordenData, items, total, visualPreview = null) {
       });
       doc.on('error', reject);
 
+      // Variables para posicionamiento fijo
+      let imageHeight = 0;
+      const pageHeight = doc.page.height;
+      const marginBottom = 40; // Espacio mínimo desde el fondo
+      
       // Si tenemos vista previa visual, mostrarla
       if (visualPreview) {
         // Convertir base64 a buffer
@@ -35,8 +40,21 @@ async function generateOrderPdf(ordenData, items, total, visualPreview = null) {
           // No especificar height para mantener proporción original
         });
         
-        // Mover el cursor después de la imagen (se ajustará automáticamente)
-        doc.y = doc.y + 20;
+        // Calcular la altura real de la imagen basada en su proporción original
+        // Usamos una aproximación: si la imagen es muy alta, asumimos que ocupará múltiples páginas
+        // y calculamos la altura basada en el ancho proporcionado
+        const originalWidth = imageWidth; // Ancho al que estamos escalando
+        const aspectRatio = 1.414; // Proporción A4 aproximada (ancho/alto)
+        imageHeight = originalWidth / aspectRatio; // Altura estimada basada en proporción A4
+        
+        // Si la imagen es muy alta, limitamos a una altura razonable por página
+        const maxHeightPerPage = pageHeight - 200; // Dejamos espacio para firmas
+        if (imageHeight > maxHeightPerPage) {
+          imageHeight = maxHeightPerPage;
+        }
+        
+        // Mover el cursor después de la imagen
+        doc.y = y + imageHeight + 20;
       } else {
         // Si no hay vista previa, mostrar información básica
         doc.fontSize(16).font('Helvetica-Bold')
@@ -51,49 +69,95 @@ async function generateOrderPdf(ordenData, items, total, visualPreview = null) {
            .text(`Total: S/ ${total.toFixed(2)}`, 50, doc.y + 40);
         
         doc.y += 80;
+        imageHeight = 80; // Altura estimada del contenido básico
       }
 
-      // Sección de firmas con diseño elegante
-      const signatureY = doc.y + 20;
+      // Calcular posición fija para los elementos de firma y sello
+      // Siempre a 8cm del final de la página, independientemente del contenido
+      const signatureY = pageHeight - 120; // 8cm desde el fondo (120 puntos ≈ 4.2cm)
       const sigWidth = 200;
       const sigHeight = 60;
       const sigSpacing = 50;
       
-      // Cuadro de firma izquierdo con gradiente
-      doc.rect(50, signatureY, sigWidth, sigHeight)
-         .fill('#f5f5f5')
-         .stroke('#d0d0d0');
-      
-      // Gradiente simulado con líneas
-      for (let i = 0; i < 10; i++) {
-        const alpha = 0.1 - (i * 0.01);
-        doc.rect(50, signatureY + (i * 6), sigWidth, 6)
-           .fill(`rgba(128, 128, 128, ${alpha})`);
+      // Verificar si necesitamos una nueva página para las firmas
+      if (doc.y > signatureY - 20) {
+        doc.addPage();
+        // Recalcular posición en la nueva página
+        const newSignatureY = doc.page.height - 120;
+        
+        // Cuadro de firma izquierdo con gradiente
+        doc.rect(50, newSignatureY, sigWidth, sigHeight)
+           .fill('#f5f5f5')
+           .stroke('#d0d0d0');
+        
+        // Gradiente simulado con líneas
+        for (let i = 0; i < 10; i++) {
+          const alpha = 0.1 - (i * 0.01);
+          doc.rect(50, newSignatureY + (i * 6), sigWidth, 6)
+             .fill(`rgba(128, 128, 128, ${alpha})`);
+        }
+        
+        // Cuadro de sello derecho con gradiente
+        doc.rect(50 + sigWidth + sigSpacing, newSignatureY, sigWidth, sigHeight)
+           .fill('#f5f5f5')
+           .stroke('#d0d0d0');
+        
+        // Gradiente simulado con líneas
+        for (let i = 0; i < 10; i++) {
+          const alpha = 0.1 - (i * 0.01);
+          doc.rect(50 + sigWidth + sigSpacing, newSignatureY + (i * 6), sigWidth, 6)
+             .fill(`rgba(128, 128, 128, ${alpha})`);
+        }
+        
+        // Textos "FIRMA" y "SELLO" debajo de los cuadros
+        doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold')
+           .text('FIRMA', 50, newSignatureY + sigHeight + 10, { align: 'center', width: sigWidth })
+           .text('SELLO', 50 + sigWidth + sigSpacing, newSignatureY + sigHeight + 10, { align: 'center', width: sigWidth });
+        
+        // Footer en la nueva página
+        const footerY = newSignatureY + sigHeight + 40;
+        doc.fontSize(8).font('Helvetica')
+           .fillColor('#7f8c8d')
+           .text(`Documento generado el ${new Date().toLocaleString('es-PE')}`, 0, footerY, { align: 'center' })
+           .text('Sistema de Órdenes de Compra - LADP', 0, footerY + 15, { align: 'center' });
+      } else {
+        // Los elementos caben en la página actual
+        // Cuadro de firma izquierdo con gradiente
+        doc.rect(50, signatureY, sigWidth, sigHeight)
+           .fill('#f5f5f5')
+           .stroke('#d0d0d0');
+        
+        // Gradiente simulado con líneas
+        for (let i = 0; i < 10; i++) {
+          const alpha = 0.1 - (i * 0.01);
+          doc.rect(50, signatureY + (i * 6), sigWidth, 6)
+             .fill(`rgba(128, 128, 128, ${alpha})`);
+        }
+        
+        // Cuadro de sello derecho con gradiente
+        doc.rect(50 + sigWidth + sigSpacing, signatureY, sigWidth, sigHeight)
+           .fill('#f5f5f5')
+           .stroke('#d0d0d0');
+        
+        // Gradiente simulado con líneas
+        for (let i = 0; i < 10; i++) {
+          const alpha = 0.1 - (i * 0.01);
+          doc.rect(50 + sigWidth + sigSpacing, signatureY + (i * 6), sigWidth, 6)
+             .fill(`rgba(128, 128, 128, ${alpha})`);
+        }
+        
+        // Textos "FIRMA" y "SELLO" debajo de los cuadros
+        doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold')
+           .text('FIRMA', 50, signatureY + sigHeight + 10, { align: 'center', width: sigWidth })
+           .text('SELLO', 50 + sigWidth + sigSpacing, signatureY + sigHeight + 10, { align: 'center', width: sigWidth });
+        
+        // Footer
+        const footerY = signatureY + sigHeight + 40;
+        doc.fontSize(8).font('Helvetica')
+           .fillColor('#7f8c8d')
+           .text(`Documento generado el ${new Date().toLocaleString('es-PE')}`, 0, footerY, { align: 'center' })
+           .text('Sistema de Órdenes de Compra - LADP', 0, footerY + 15, { align: 'center' });
       }
-      
-      // Cuadro de sello derecho con gradiente
-      doc.rect(50 + sigWidth + sigSpacing, signatureY, sigWidth, sigHeight)
-         .fill('#f5f5f5')
-         .stroke('#d0d0d0');
-      
-      // Gradiente simulado con líneas
-      for (let i = 0; i < 10; i++) {
-        const alpha = 0.1 - (i * 0.01);
-        doc.rect(50 + sigWidth + sigSpacing, signatureY + (i * 6), sigWidth, 6)
-           .fill(`rgba(128, 128, 128, ${alpha})`);
-      }
-      
-      // Textos "FIRMA" y "SELLO" debajo de los cuadros
-      doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold')
-         .text('FIRMA', 50, signatureY + sigHeight + 10, { align: 'center', width: sigWidth })
-         .text('SELLO', 50 + sigWidth + sigSpacing, signatureY + sigHeight + 10, { align: 'center', width: sigWidth });
-      
-      // Footer
-      doc.moveDown(4);
-      doc.fontSize(8).font('Helvetica')
-         .fillColor('#7f8c8d')
-         .text(`Documento generado el ${new Date().toLocaleString('es-PE')}`, { align: 'center' })
-         .text('Sistema de Órdenes de Compra - LADP', { align: 'center' });
 
       doc.end();
       

@@ -83,7 +83,7 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
           <Select
             label="Categoría de Compra"
             value={formData.categoriaCompra || ''}
-            onChange={(e) => handleCategoriaChange(e.target.value)}
+            onChange={(value) => handleCategoriaChange(value)}
             options={CATEGORIAS_COMPRA}
             placeholder="Seleccione categoría"
             required
@@ -96,7 +96,7 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
             <Select
               label="Tipo de Orden"
               value={formData.tipoOC || 'standard'}
-              onChange={(e) => onFormChange('tipoOC', e.target.value)}
+              onChange={(value) => onFormChange('tipoOC', value)}
               options={TIPOS_ORDEN}
             />
             <div className="text-xs text-secondary-500 space-y-1">
