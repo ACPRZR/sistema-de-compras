@@ -9,9 +9,11 @@ import {
   BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { EMPRESA_CONFIG } from '../../utils/constants';
+import { useMaestros } from '../../hooks/useMaestros';
 
 const OrdenVisual = ({ formData, items, total }) => {
+  const { maestros } = useMaestros();
+  const empresa = maestros.configuracionEmpresa || {};
   // Calcular resumen de items
   const resumenItems = Object.values(items)
     .filter(item => item.descripcion && item.descripcion.trim() !== '')
@@ -20,19 +22,22 @@ const OrdenVisual = ({ formData, items, total }) => {
       subtotalFormatted: formatCurrency(item.subtotal)
     }));
 
-  const getUnidadNegocioTexto = (unidad) => {
-    const unidades = {
-      'oficina_nacional': 'Oficina Nacional',
-      'logistica': 'Logística',
-      'legal': 'Legal',
-      'sistemas': 'Sistemas',
-      'mantenimiento': 'Mantenimiento'
-    };
-    return unidades[unidad] || 'No especificada';
+  const getUnidadNegocioTexto = (codigo) => {
+    if (!codigo) return 'No especificada';
+    const unidad = maestros.unidadesNegocio.find(u => u.codigo === codigo);
+    return unidad ? unidad.nombre : codigo;
   };
 
-  const getTipoOCTexto = (tipo) => {
-    return tipo === 'blanket' ? 'Orden Marco (Blanket)' : 'Orden Estándar';
+  const getTipoOCTexto = (codigo) => {
+    if (!codigo) return 'No especificado';
+    const tipo = maestros.tiposOrden.find(t => t.codigo === codigo);
+    return tipo ? tipo.nombre : codigo;
+  };
+  
+  const getUbicacionEntregaTexto = (codigo) => {
+    if (!codigo) return 'No especificada';
+    const ubicacion = maestros.ubicacionesEntrega.find(u => u.codigo === codigo);
+    return ubicacion ? ubicacion.nombre : codigo;
   };
 
   const fechaEmision = new Date().toLocaleDateString('es-PE');
@@ -44,8 +49,8 @@ const OrdenVisual = ({ formData, items, total }) => {
       {/* Header de la empresa */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-6 text-white">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Las Asambleas de Dios del Perú</h1>
-          <p className="text-sm font-medium italic">"{EMPRESA_CONFIG.lema}"</p>
+          <h1 className="text-2xl font-bold mb-2">{empresa.nombre || 'Las Asambleas de Dios del Perú'}</h1>
+          <p className="text-sm font-medium italic">"{empresa.lema || ''}"</p>
         </div>
       </div>
 
@@ -147,7 +152,7 @@ const OrdenVisual = ({ formData, items, total }) => {
           
           <div>
             <p className="text-secondary-600">Ubicación de Entrega:</p>
-            <p className="font-medium">{formData.ubicacionEntrega || 'No especificada'}</p>
+            <p className="font-medium">{getUbicacionEntregaTexto(formData.ubicacionEntrega)}</p>
           </div>
           
           <div>
@@ -256,9 +261,9 @@ const OrdenVisual = ({ formData, items, total }) => {
 
       {/* Información de contacto */}
       <div className="bg-gray-100 rounded-lg p-4 text-center text-sm text-gray-600">
-        <p><strong>Dirección:</strong> {EMPRESA_CONFIG.direccion}</p>
-        <p><strong>Teléfonos:</strong> {EMPRESA_CONFIG.telefono}</p>
-        <p><strong>Correo Electrónico:</strong> {EMPRESA_CONFIG.email}</p>
+        <p><strong>Dirección:</strong> {empresa.direccion || 'N/A'}</p>
+        <p><strong>Teléfonos:</strong> {empresa.telefono || 'N/A'}</p>
+        <p><strong>Correo Electrónico:</strong> {empresa.email || 'N/A'}</p>
       </div>
     </div>
   );

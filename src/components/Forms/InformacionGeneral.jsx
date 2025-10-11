@@ -7,11 +7,27 @@ import {
 } from '@heroicons/react/24/outline';
 import Select from '../UI/Select';
 import Input from '../UI/Input';
-import { CATEGORIAS_COMPRA, TIPOS_ORDEN } from '../../utils/constants';
+import { useMaestros } from '../../hooks/useMaestros';
 import { generateOCNumber, getDefaultRequerimientoDate } from '../../utils/formatters';
 
 const InformacionGeneral = ({ formData, onFormChange }) => {
   const [numeroOC, setNumeroOC] = useState('');
+  const { 
+    loading, 
+    getCategoriasOptions,
+    getTiposOrdenOptions
+  } = useMaestros();
+  
+  // Obtener opciones formateadas desde el hook
+  const categoriasOptions = getCategoriasOptions();
+  const tiposOrdenOptions = getTiposOrdenOptions();
+  
+  console.log('🔍 Opciones generadas en InformacionGeneral:', {
+    categorias: categoriasOptions.length,
+    tiposOrden: tiposOrdenOptions.length,
+    loading,
+    categoriasSample: categoriasOptions[0]
+  });
 
   useEffect(() => {
     // Generar número de OC automáticamente solo una vez
@@ -84,8 +100,9 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
             label="Categoría de Compra"
             value={formData.categoriaCompra || ''}
             onChange={(value) => handleCategoriaChange(value)}
-            options={CATEGORIAS_COMPRA}
+            options={categoriasOptions}
             placeholder="Seleccione categoría"
+            disabled={loading}
             required
           />
         </div>
@@ -97,7 +114,8 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
               label="Tipo de Orden"
               value={formData.tipoOC || 'standard'}
               onChange={(value) => onFormChange('tipoOC', value)}
-              options={TIPOS_ORDEN}
+              options={tiposOrdenOptions}
+              disabled={loading}
             />
             <div className="text-xs text-secondary-500 space-y-1">
               <p className="flex items-center">

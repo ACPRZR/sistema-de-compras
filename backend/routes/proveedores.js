@@ -18,12 +18,19 @@ const handleValidationErrors = (req, res, next) => {
 
 // Validaciones
 const validarProveedor = [
-  body('ruc').isLength({ min: 11, max: 11 }).withMessage('RUC debe tener 11 dígitos'),
+  body('ruc')
+    .optional({ values: 'falsy' })
+    .custom((value) => {
+      if (value && value.length !== 11) {
+        throw new Error('RUC debe tener 11 dígitos');
+      }
+      return true;
+    }),
   body('nombre').notEmpty().withMessage('Nombre es requerido'),
-  body('email').optional().isEmail().withMessage('Email inválido'),
-  body('telefono').optional().isLength({ min: 7, max: 20 }).withMessage('Teléfono inválido'),
+  body('email').optional({ values: 'falsy' }).isEmail().withMessage('Email inválido'),
+  body('telefono').optional({ values: 'falsy' }).isLength({ min: 7, max: 20 }).withMessage('Teléfono inválido'),
   body('categoria_id').isInt({ min: 1 }).withMessage('Categoría es requerida'),
-  body('calificacion').optional().isFloat({ min: 0, max: 5 }).withMessage('Calificación debe estar entre 0 y 5')
+  body('calificacion').optional({ values: 'falsy' }).isFloat({ min: 0, max: 5 }).withMessage('Calificación debe estar entre 0 y 5')
 ];
 
 // GET /api/proveedores - Obtener todos los proveedores
@@ -188,13 +195,15 @@ router.get('/ruc/:ruc', async (req, res) => {
 // POST /api/proveedores - Crear nuevo proveedor
 router.post('/', validarProveedor, handleValidationErrors, async (req, res) => {
   try {
-    // Verificar si el RUC ya existe
-    const proveedorExistente = await Proveedor.findByRUC(req.body.ruc);
-    if (proveedorExistente) {
-      return res.status(409).json({
-        success: false,
-        message: 'Ya existe un proveedor con este RUC'
-      });
+    // Verificar si el RUC ya existe (solo si se proporcionó un RUC)
+    if (req.body.ruc) {
+      const proveedorExistente = await Proveedor.findByRUC(req.body.ruc);
+      if (proveedorExistente) {
+        return res.status(409).json({
+          success: false,
+          message: 'Ya existe un proveedor con este RUC'
+        });
+      }
     }
 
     const proveedor = await Proveedor.create(req.body);

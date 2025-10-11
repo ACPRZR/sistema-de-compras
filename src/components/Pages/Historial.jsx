@@ -29,7 +29,6 @@ const Historial = () => {
   } = useHistorialOrdenes();
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
 
   // Manejar filtros
   const handleFiltroChange = (campo, valor) => {
@@ -37,15 +36,12 @@ const Historial = () => {
   };
 
   // Manejar acciones de orden
-  const handleVerOrden = (orden) => {
-    setOrdenSeleccionada(orden);
+  const handleVerOrden = () => {
     // TODO: Implementar modal de detalles
-    console.log('Ver orden:', orden);
   };
 
   const handleImprimirOrden = (orden) => {
     // TODO: Implementar impresión
-    console.log('Imprimir orden:', orden);
   };
 
   // Obtener icono de estado

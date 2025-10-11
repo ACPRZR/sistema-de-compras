@@ -34,13 +34,10 @@ const ItemsOrdenDB = ({
     const loadUnidades = async () => {
       setLoadingUnidades(true);
       try {
-        console.log('🔍 Cargando unidades de medida...');
         const unidadesResult = await apiService.getUnidadesMedida();
-        console.log('📊 Respuesta de unidades de medida:', unidadesResult);
         setUnidadesMedida(unidadesResult.data || []);
-        console.log('✅ Unidades de medida cargadas:', unidadesResult.data || []);
       } catch (error) {
-        console.error('❌ Error cargando unidades de medida:', error);
+        console.error('Error cargando unidades de medida:', error);
         setUnidadesMedida([]);
       } finally {
         setLoadingUnidades(false);
@@ -114,7 +111,7 @@ const ItemsOrdenDB = ({
 
   const importarCSV = () => {
     // Funcionalidad no necesaria para uso local
-    console.log('Importación CSV no disponible en versión local');
+    alert('Importación CSV no disponible en versión local');
   };
 
   const total = calcularTotal();
@@ -124,9 +121,6 @@ const ItemsOrdenDB = ({
     value: unidad.nombre,
     label: unidad.nombre
   }));
-
-  console.log('🔧 Unidades de medida disponibles:', unidadesMedida);
-  console.log('🔧 Opciones de unidades preparadas:', opcionesUnidades);
 
   return (
     <div className="card">
@@ -238,10 +232,6 @@ const ItemsOrdenDB = ({
                       disabled={loading || loadingUnidades}
                       placeholder={loadingUnidades ? "Cargando unidades..." : "Seleccione una opción"}
                     />
-                    {/* Debug info */}
-                    <div className="text-xs text-gray-500 mt-1">
-                      Debug: {opcionesUnidades.length} unidades disponibles
-                    </div>
                   </div>
 
                   {/* Cantidad */}

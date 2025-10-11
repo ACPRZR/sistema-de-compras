@@ -12,7 +12,6 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 import Button from '../UI/Button';
-import Select from '../UI/Select';
 import Input from '../UI/Input';
 import { useOrdenesPendientes } from '../../hooks/useOrdenesPendientes';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -51,7 +50,6 @@ const OrdenesPendientes = () => {
 
   const handleEditarOrden = (orden) => {
     // TODO: Implementar edición
-    console.log('Editar orden:', orden);
   };
 
   const handleAprobarOrden = async (orden) => {

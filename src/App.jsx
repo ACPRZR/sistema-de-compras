@@ -96,8 +96,7 @@ const App = () => {
         total: calcularTotal()
       };
 
-      const ordenGuardada = await guardarOrden(ordenData);
-      console.log('Orden guardada en BD:', ordenGuardada);
+      await guardarOrden(ordenData);
       
       // Mostrar mensaje de éxito
       alert('Orden de compra guardada exitosamente en la base de datos');

@@ -16,6 +16,14 @@ const unidadesMedidaRoutes = require('./routes/unidades-medida');
 const pdfRoutes = require('./routes/pdf');
 const reportesRoutes = require('./routes/reportes');
 
+// Rutas de datos maestros (individuales)
+const unidadesNegocioRoutes = require('./routes/unidades-negocio');
+const tiposOrdenRoutes = require('./routes/tipos-orden');
+const ubicacionesEntregaRoutes = require('./routes/ubicaciones-entrega');
+const condicionesPagoRoutes = require('./routes/condiciones-pago');
+const unidadesAutorizaRoutes = require('./routes/unidades-autoriza');
+const configuracionEmpresaRoutes = require('./routes/configuracion-empresa');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -118,6 +126,14 @@ app.use('/api/categorias', categoriasRoutes);
 app.use('/api/unidades-medida', unidadesMedidaRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/reportes', reportesRoutes);
+
+// Rutas de datos maestros (individuales)
+app.use('/api/unidades-negocio', unidadesNegocioRoutes);
+app.use('/api/tipos-orden', tiposOrdenRoutes);
+app.use('/api/ubicaciones-entrega', ubicacionesEntregaRoutes);
+app.use('/api/condiciones-pago', condicionesPagoRoutes);
+app.use('/api/unidades-autoriza', unidadesAutorizaRoutes);
+app.use('/api/configuracion-empresa', configuracionEmpresaRoutes);
 
 // =====================================================
 // MANEJO DE ERRORES

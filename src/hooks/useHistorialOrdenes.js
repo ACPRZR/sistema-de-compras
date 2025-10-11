@@ -24,6 +24,27 @@ export const useHistorialOrdenes = () => {
     busqueda: ''
   });
 
+  // Calcular estadísticas basadas en los datos del historial
+  const calcularEstadisticas = useCallback((ordenes) => {
+    const aprobadas = ordenes.filter(orden => orden.estado_nombre?.toLowerCase() === 'aprobada');
+    const canceladas = ordenes.filter(orden => orden.estado_nombre?.toLowerCase() === 'cancelada');
+    
+    const totalAprobadas = aprobadas.length;
+    const totalCanceladas = canceladas.length;
+    const totalOrdenes = totalAprobadas + totalCanceladas;
+    
+    const montoTotal = ordenes.reduce((sum, orden) => sum + (parseFloat(orden.total) || 0), 0);
+    const montoPromedio = totalOrdenes > 0 ? montoTotal / totalOrdenes : 0;
+    
+    setEstadisticas({
+      total_ordenes: totalOrdenes,
+      ordenes_completadas: totalAprobadas, // En el historial, "completadas" son las aprobadas
+      ordenes_canceladas: totalCanceladas,
+      monto_total: montoTotal,
+      monto_promedio: montoPromedio
+    });
+  }, []);
+
   // Cargar órdenes del historial (completadas y canceladas)
   const cargarHistorial = useCallback(async (filtrosAplicados = filtros) => {
     setLoading(true);
@@ -55,40 +76,12 @@ export const useHistorialOrdenes = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Calcular estadísticas basadas en los datos del historial
-  const calcularEstadisticas = useCallback((ordenes) => {
-    const aprobadas = ordenes.filter(orden => orden.estado_nombre?.toLowerCase() === 'aprobada');
-    const canceladas = ordenes.filter(orden => orden.estado_nombre?.toLowerCase() === 'cancelada');
-    
-    const totalAprobadas = aprobadas.length;
-    const totalCanceladas = canceladas.length;
-    const totalOrdenes = totalAprobadas + totalCanceladas;
-    
-    const montoTotal = ordenes.reduce((sum, orden) => sum + (parseFloat(orden.total) || 0), 0);
-    const montoPromedio = totalOrdenes > 0 ? montoTotal / totalOrdenes : 0;
-    
-    console.log('📊 Calculando estadísticas del historial:');
-    console.log('  - Total órdenes:', totalOrdenes);
-    console.log('  - Aprobadas:', totalAprobadas);
-    console.log('  - Canceladas:', totalCanceladas);
-    console.log('  - Monto total:', montoTotal);
-    console.log('  - Monto promedio:', montoPromedio);
-    
-    setEstadisticas({
-      total_ordenes: totalOrdenes,
-      ordenes_completadas: totalAprobadas, // En el historial, "completadas" son las aprobadas
-      ordenes_canceladas: totalCanceladas,
-      monto_total: montoTotal,
-      monto_promedio: montoPromedio
-    });
-  }, []);
+  }, [filtros, calcularEstadisticas]);
 
   // Cargar datos iniciales
   useEffect(() => {
     cargarHistorial();
-  }, [filtros]);
+  }, [cargarHistorial]);
 
   // Aplicar filtros
   const aplicarFiltros = useCallback((nuevosFiltros) => {

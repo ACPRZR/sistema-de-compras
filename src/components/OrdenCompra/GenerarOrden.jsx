@@ -10,10 +10,11 @@ import Button from '../UI/Button';
 import OrdenVisual from './OrdenVisual';
 import { useOrdenCompraDB } from '../../hooks/useOrdenCompraDB';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { EMPRESA_CONFIG } from '../../utils/constants';
+import { useMaestros } from '../../hooks/useMaestros';
 
 const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
   const { resumenItems, calcularTotal } = useOrdenCompraDB();
+  const { maestros } = useMaestros();
   const [isGenerating, setIsGenerating] = useState(false);
   const [ordenGenerada, setOrdenGenerada] = useState('');
   const [mostrarVistaVisual, setMostrarVistaVisual] = useState(false);
@@ -44,7 +45,32 @@ const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
     const fechaRequerimiento = formData.fechaRequerimiento ? 
       formatDate(formData.fechaRequerimiento) : 'No especificada';
     
-    const tipoOCTexto = formData.tipoOC === 'blanket' ? 'ORDEN MARCO (BLANKET)' : 'ORDEN ESTÁNDAR';
+    // Helper functions para obtener nombres legibles
+    const getUnidadNegocioTexto = (codigo) => {
+      if (!codigo) return 'No especificada';
+      const unidad = maestros.unidadesNegocio.find(u => u.codigo === codigo);
+      return unidad ? unidad.nombre : codigo;
+    };
+
+    const getTipoOCTexto = (codigo) => {
+      if (!codigo) return 'ORDEN ESTÁNDAR';
+      const tipo = maestros.tiposOrden.find(t => t.codigo === codigo);
+      return tipo ? tipo.nombre.toUpperCase() : codigo.toUpperCase();
+    };
+    
+    const getUbicacionEntregaTexto = (codigo) => {
+      if (!codigo) return 'No especificada';
+      const ubicacion = maestros.ubicacionesEntrega.find(u => u.codigo === codigo);
+      return ubicacion ? ubicacion.nombre : codigo;
+    };
+    
+    const getUnidadAutorizaTexto = (codigo) => {
+      if (!codigo) return 'No especificada';
+      const unidad = maestros.unidadesAutoriza.find(u => u.codigo === codigo);
+      return unidad ? unidad.nombre : codigo;
+    };
+    
+    const tipoOCTexto = getTipoOCTexto(formData.tipoOC);
     
     // Construir detalle de items
     let detalleItems = '';
@@ -67,12 +93,14 @@ RUC: ${formData.rucProveedor || 'No especificado'}`;
       if (formData.emailProveedor) infoProveedor += `\nEmail: ${formData.emailProveedor}`;
     }
 
+    const empresa = maestros.configuracionEmpresa || {};
+    
     return `
-${EMPRESA_CONFIG.nombreCompleto}
+${empresa.nombre_completo || empresa.nombre || 'Las Asambleas de Dios del Perú'}
 
-Inscrita en el Registro de Personas Jurídicas de Lima Partida N° ${EMPRESA_CONFIG.partida}. R.U.C. N° ${EMPRESA_CONFIG.ruc}
-Registro de Entidades Religiosas N° ${EMPRESA_CONFIG.registro}
-"${EMPRESA_CONFIG.lema}"
+Inscrita en el Registro de Personas Jurídicas de Lima Partida N° ${empresa.partida || 'N/A'}. R.U.C. N° ${empresa.ruc || 'N/A'}
+Registro de Entidades Religiosas N° ${empresa.registro || 'N/A'}
+"${empresa.lema || ''}"
 
                                     LOGÍSTICA
 
@@ -90,9 +118,9 @@ ESTADO: 📝 Creada
 ═══════════════════════════════════════════════════════════════════════════════
 
 INFORMACIÓN ORGANIZACIONAL:
-Unidad de Negocio: ${formData.unidadNegocio || 'No especificada'}
-Unidad que Autoriza: ${formData.unidadAutoriza || 'No especificada'}
-Ubicación de Entrega: ${formData.ubicacionEntrega || 'No especificada'}
+Unidad de Negocio: ${getUnidadNegocioTexto(formData.unidadNegocio)}
+Unidad que Autoriza: ${getUnidadAutorizaTexto(formData.unidadAutoriza)}
+Ubicación de Entrega: ${getUbicacionEntregaTexto(formData.ubicacionEntrega)}
 ${formData.datosProyecto ? `Proyecto Asociado: ${formData.datosProyecto}` : ''}
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -130,9 +158,9 @@ _________________                  _________________
 Fecha: ${fechaEmision}             Fecha: ___________
 
 ═══════════════════════════════════════════════════════════════════════════════
-                            Dirección: ${EMPRESA_CONFIG.direccion}
-                             Teléfonos: ${EMPRESA_CONFIG.telefono}
-                      Correo Electrónico: ${EMPRESA_CONFIG.email}`;
+                            Dirección: ${empresa.direccion || 'N/A'}
+                             Teléfonos: ${empresa.telefono || 'N/A'}
+                      Correo Electrónico: ${empresa.email || 'N/A'}`;
   };
 
 
@@ -229,7 +257,7 @@ Las Asambleas de Dios del Perú`;
       window.open(`mailto:${email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`);
     } else {
       // Para uso local, mostrar mensaje simple
-      console.log('Email del proveedor no especificado');
+      alert('Por favor especifique el email del proveedor');
     }
   };
 

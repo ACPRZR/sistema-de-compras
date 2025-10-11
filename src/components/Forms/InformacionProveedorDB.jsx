@@ -47,13 +47,10 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
   useEffect(() => {
     const loadCategorias = async () => {
       try {
-        console.log('🔍 Cargando categorías...');
         const result = await apiService.getCategorias();
-        console.log('📊 Respuesta de categorías:', result);
         setCategorias(result.data || []);
-        console.log('✅ Categorías cargadas:', result.data || []);
       } catch (error) {
-        console.error('❌ Error cargando categorías:', error);
+        console.error('Error cargando categorías:', error);
         setCategorias([]);
       }
     };
@@ -95,14 +92,12 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
   }, [categoriaCompra, mapeoCategoriaId]);
 
   const handleProveedorChange = (proveedorData) => {
-    if (proveedorData === 'nuevo') {
-      // Limpiar campos para nuevo proveedor
-      onFormChange('proveedor', '');
-      onFormChange('rucProveedor', '');
-      onFormChange('contactoProveedor', '');
-      onFormChange('telefonoProveedor', '');
-      onFormChange('emailProveedor', '');
-    } else if (proveedorData === 'varios') {
+    // Si no seleccionó nada o es el placeholder
+    if (!proveedorData || proveedorData === '') {
+      return;
+    }
+    
+    if (proveedorData === 'varios') {
       // Configurar para varios proveedores
       onFormChange('proveedor', 'Varios');
       onFormChange('rucProveedor', 'Sin RUC');
@@ -113,7 +108,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
       // Completar datos del proveedor seleccionado
       const proveedor = JSON.parse(proveedorData);
       onFormChange('proveedor', proveedor.nombre);
-      onFormChange('rucProveedor', proveedor.ruc);
+      onFormChange('rucProveedor', proveedor.ruc || '');
       onFormChange('contactoProveedor', proveedor.contacto || '');
       onFormChange('telefonoProveedor', proveedor.telefono || '');
       onFormChange('emailProveedor', proveedor.email || '');
@@ -186,7 +181,6 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
   };
 
   const handleNuevoProveedorChange = (field, value) => {
-    console.log('handleNuevoProveedorChange:', field, value);
     setNuevoProveedor(prev => ({ ...prev, [field]: value }));
     // Limpiar error del campo
     if (errors[field]) {
@@ -213,7 +207,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
       newErrors.email = 'Email inválido';
     }
     
-    if (nuevoProveedor.telefono && !/^[\d\s\-()\+]+$/.test(nuevoProveedor.telefono)) {
+    if (nuevoProveedor.telefono && !/^[\d\s\-()+]+$/.test(nuevoProveedor.telefono)) {
       newErrors.telefono = 'Teléfono inválido';
     }
     
@@ -242,13 +236,18 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
         const proveedoresFiltrados = todosProveedores.filter(p => p.categoria_id === categoriaId);
         setProveedores(proveedoresFiltrados);
         
-        // Seleccionar el nuevo proveedor
-        onFormChange('proveedor_id', result.data.id);
-        onFormChange('proveedor_nombre', result.data.nombre);
-        onFormChange('proveedor_ruc', result.data.ruc);
-        onFormChange('proveedor_contacto', result.data.contacto);
-        onFormChange('proveedor_telefono', result.data.telefono);
-        onFormChange('proveedor_email', result.data.email);
+        // Seleccionar el nuevo proveedor automáticamente
+        const nuevoProveedor = result.data;
+        onFormChange('proveedor', nuevoProveedor.nombre);
+        onFormChange('rucProveedor', nuevoProveedor.ruc || '');
+        onFormChange('contactoProveedor', nuevoProveedor.contacto || '');
+        onFormChange('telefonoProveedor', nuevoProveedor.telefono || '');
+        onFormChange('emailProveedor', nuevoProveedor.email || '');
+        
+        // Mostrar contacto si hay datos
+        if (nuevoProveedor.contacto || nuevoProveedor.telefono || nuevoProveedor.email) {
+          setShowContacto(true);
+        }
         
         cerrarModal();
       } else {
@@ -268,8 +267,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
     ...proveedores.map(proveedor => ({
       value: JSON.stringify(proveedor),
       label: proveedor.nombre
-    })),
-    { value: 'nuevo', label: '+ Agregar Nuevo Proveedor' }
+    }))
   ];
 
   return (
@@ -439,10 +437,6 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
                     leftIcon={TagIcon}
                     required
                   />
-                  {/* Debug info */}
-                  <div className="text-xs text-gray-500 mt-1">
-                    Debug: {categorias.length} categorías disponibles
-                  </div>
 
                   <Input
                     label="RUC"

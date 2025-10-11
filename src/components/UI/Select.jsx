@@ -32,15 +32,12 @@ const Select = forwardRef(({
             className
           )}
           onChange={(e) => {
-            console.log('Select onChange event:', e);
             if (onChange) {
               if (e && e.target && e.target.value !== undefined) {
                 onChange(e.target.value);
               } else if (typeof e === 'string') {
                 // Si el evento es directamente un string (valor)
                 onChange(e);
-              } else {
-                console.warn('Select onChange: Invalid event structure', e);
               }
             }
           }}

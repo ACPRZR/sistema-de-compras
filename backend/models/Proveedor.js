@@ -16,6 +16,9 @@ class Proveedor {
       categoria_id
     } = proveedorData;
 
+    // Si no hay RUC, generar uno temporal basado en timestamp
+    const rucFinal = ruc || `TEMP-${Date.now()}`;
+
     const text = `
       INSERT INTO proveedores (
         ruc, nombre, contacto, telefono, email, direccion, 
@@ -25,7 +28,7 @@ class Proveedor {
     `;
 
     const values = [
-      ruc, nombre, contacto, telefono, email, direccion,
+      rucFinal, nombre, contacto, telefono, email, direccion,
       especialidad, calificacion, tiempo_entrega, categoria_id
     ];
 

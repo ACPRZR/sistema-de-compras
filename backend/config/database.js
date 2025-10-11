@@ -12,14 +12,17 @@ const dbConfig = {
   max: 20, // Máximo de conexiones en el pool
   idleTimeoutMillis: 30000, // Tiempo de espera antes de cerrar conexiones inactivas
   connectionTimeoutMillis: 2000, // Tiempo de espera para obtener conexión
-  searchPath: 'ordenes_compra, public' // Configurar esquema de búsqueda
+  searchPath: 'ordenes_compra, public', // Configurar esquema de búsqueda
+  client_encoding: 'UTF8' // Forzar codificación UTF-8
 };
 
 // Crear pool de conexiones
 const pool = new Pool(dbConfig);
 
 // Eventos del pool
-pool.on('connect', () => {
+pool.on('connect', (client) => {
+  // Configurar UTF-8 en cada conexión
+  client.query('SET CLIENT_ENCODING TO UTF8');
   console.log('✅ Conexión a la base de datos establecida');
 });
 

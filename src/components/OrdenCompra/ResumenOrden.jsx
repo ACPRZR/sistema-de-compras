@@ -6,8 +6,11 @@ import {
   BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { useMaestros } from '../../hooks/useMaestros';
 
 const ResumenOrden = ({ formData, items, total }) => {
+  const { maestros } = useMaestros();
+  
   // Calcular resumen de items desde los props
   const resumenItems = Object.values(items)
     .filter(item => item.descripcion && item.descripcion.trim() !== '')
@@ -16,19 +19,22 @@ const ResumenOrden = ({ formData, items, total }) => {
       subtotalFormatted: formatCurrency(item.subtotal)
     }));
 
-  const getUnidadNegocioTexto = (unidad) => {
-    const unidades = {
-      'oficina_nacional': 'Oficina Nacional',
-      'logistica': 'Logística',
-      'legal': 'Legal',
-      'sistemas': 'Sistemas',
-      'mantenimiento': 'Mantenimiento'
-    };
-    return unidades[unidad] || 'No especificada';
+  const getUnidadNegocioTexto = (codigo) => {
+    if (!codigo) return 'No especificada';
+    const unidad = maestros.unidadesNegocio.find(u => u.codigo === codigo);
+    return unidad ? unidad.nombre : codigo;
   };
 
-  const getTipoOCTexto = (tipo) => {
-    return tipo === 'blanket' ? 'Orden Marco (Blanket)' : 'Orden Estándar';
+  const getTipoOCTexto = (codigo) => {
+    if (!codigo) return 'No especificado';
+    const tipo = maestros.tiposOrden.find(t => t.codigo === codigo);
+    return tipo ? tipo.nombre : codigo;
+  };
+  
+  const getUbicacionEntregaTexto = (codigo) => {
+    if (!codigo) return 'No especificada';
+    const ubicacion = maestros.ubicacionesEntrega.find(u => u.codigo === codigo);
+    return ubicacion ? ubicacion.nombre : codigo;
   };
 
   return (
@@ -122,7 +128,7 @@ const ResumenOrden = ({ formData, items, total }) => {
             
             <div>
               <p className="text-secondary-600">Ubicación de Entrega:</p>
-              <p className="font-medium">{formData.ubicacionEntrega || 'No especificada'}</p>
+              <p className="font-medium">{getUbicacionEntregaTexto(formData.ubicacionEntrega)}</p>
             </div>
             
             <div>
