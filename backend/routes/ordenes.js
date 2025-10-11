@@ -415,4 +415,59 @@ router.delete('/:id/items/:itemId', async (req, res) => {
   }
 });
 
+// PUT /api/ordenes/:id/completar - Marcar orden como completada
+router.put('/:id/completar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completada_por } = req.body;
+    const ip = req.ip || req.connection.remoteAddress;
+
+    // Verificar que la orden existe y está en estado "Aprobada"
+    const orden = await OrdenCompra.findById(id);
+    
+    if (!orden) {
+      return res.status(404).json({
+        success: false,
+        message: 'Orden no encontrada'
+      });
+    }
+
+    if (orden.estado_id !== 2) { // 2 = Aprobada
+      return res.status(400).json({
+        success: false,
+        message: 'Solo se pueden completar órdenes aprobadas',
+        estado_actual: orden.estado_nombre
+      });
+    }
+
+    // Actualizar a estado "Completada" (ID: 4)
+    const pool = require('../config/database').pool;
+    await pool.query(
+      `UPDATE ordenes_compra 
+       SET estado_id = 4,
+           completada_por = $1,
+           completada_fecha = CURRENT_TIMESTAMP,
+           completada_ip = $2
+       WHERE id = $3`,
+      [completada_por || 'Usuario', ip, id]
+    );
+
+    // Obtener orden actualizada
+    const ordenActualizada = await OrdenCompra.findById(id);
+
+    res.json({
+      success: true,
+      message: 'Orden marcada como completada',
+      data: ordenActualizada
+    });
+  } catch (error) {
+    console.error('Error completando orden:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

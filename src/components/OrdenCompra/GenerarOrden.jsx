@@ -3,14 +3,17 @@ import {
   DocumentTextIcon, 
   ArrowDownTrayIcon,
   EnvelopeIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import html2canvas from 'html2canvas';
 import Button from '../UI/Button';
 import OrdenVisual from './OrdenVisual';
+import LinksAprobacionModal from '../Modals/LinksAprobacionModal';
 import { useOrdenCompraDB } from '../../hooks/useOrdenCompraDB';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { useMaestros } from '../../hooks/useMaestros';
+import apiService from '../../services/api';
 
 const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
   const { resumenItems, calcularTotal } = useOrdenCompraDB();
@@ -18,23 +21,34 @@ const GenerarOrden = ({ formData, onGenerarOrden, items, total }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [ordenGenerada, setOrdenGenerada] = useState('');
   const [mostrarVistaVisual, setMostrarVistaVisual] = useState(false);
+  const [ordenGuardadaId, setOrdenGuardadaId] = useState(null);
+  const [numeroOcGuardado, setNumeroOcGuardado] = useState(null);
+  const [showLinksModal, setShowLinksModal] = useState(false);
+  const [linksAprobacion, setLinksAprobacion] = useState(null);
+  const [generandoLinks, setGenerandoLinks] = useState(false);
   const visualRef = useRef(null);
 
   const generarOrdenCompra = async () => {
     setIsGenerating(true);
     
     try {
-      // Simular delay de generación
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       const totalCalculado = total || calcularTotal();
       const orden = crearOrdenCompra(formData, resumenItems, totalCalculado);
       
+      // Guardar orden en la base de datos (ahora onGenerarOrden debe devolver la respuesta)
+      const respuesta = await onGenerarOrden(orden);
+      
+      // Si la orden fue guardada exitosamente, capturar el ID
+      if (respuesta && respuesta.id) {
+        setOrdenGuardadaId(respuesta.id);
+        setNumeroOcGuardado(respuesta.numero_oc || formData.numeroOC);
+      }
+      
       setOrdenGenerada(orden);
       setMostrarVistaVisual(true);
-      onGenerarOrden(orden);
     } catch (error) {
       console.error('Error generando orden:', error);
+      alert('Error al guardar la orden: ' + error.message);
     } finally {
       setIsGenerating(false);
     }
@@ -256,8 +270,39 @@ Las Asambleas de Dios del Perú`;
     if (email) {
       window.open(`mailto:${email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`);
     } else {
-      // Para uso local, mostrar mensaje simple
       alert('Por favor especifique el email del proveedor');
+    }
+  };
+
+  /**
+   * Generar links de aprobación para enviar por WhatsApp
+   */
+  const generarLinksAprobacion = async () => {
+    if (!ordenGuardadaId) {
+      alert('Primero debes guardar la orden');
+      return;
+    }
+
+    setGenerandoLinks(true);
+    try {
+      const baseUrl = window.location.origin;
+      const response = await apiService.generarTokenAprobacion(ordenGuardadaId, baseUrl);
+
+      if (response.success) {
+        setLinksAprobacion({
+          urls: response.data.urls,
+          whatsappMessage: response.data.whatsappMessage,
+          numero_oc: numeroOcGuardado
+        });
+        setShowLinksModal(true);
+      } else {
+        alert('Error al generar links: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Error generando links:', error);
+      alert('Error al generar los links de aprobación');
+    } finally {
+      setGenerandoLinks(false);
     }
   };
 
@@ -316,6 +361,15 @@ Las Asambleas de Dios del Perú`;
             {/* Acciones disponibles */}
             <div className="flex flex-wrap gap-3">
               <Button
+                variant="accent"
+                onClick={generarLinksAprobacion}
+                icon={ShareIcon}
+                loading={generandoLinks}
+              >
+                {generandoLinks ? 'Generando...' : 'Enviar para Aprobación'}
+              </Button>
+
+              <Button
                 variant="secondary"
                 onClick={descargarOrden}
                 icon={ArrowDownTrayIcon}
@@ -369,6 +423,13 @@ Las Asambleas de Dios del Perú`;
         )}
 
       </div>
+
+      {/* Modal de links de aprobación */}
+      <LinksAprobacionModal
+        isOpen={showLinksModal}
+        onClose={() => setShowLinksModal(false)}
+        linksData={linksAprobacion}
+      />
     </div>
   );
 };

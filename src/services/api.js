@@ -443,6 +443,59 @@ class ApiService {
     
     return this.request(endpoint);
   }
+
+  // =====================================================
+  // MÉTODOS PARA APROBACIÓN DE ÓRDENES
+  // =====================================================
+
+  /**
+   * Generar token de aprobación para una orden
+   * @param {number} ordenId - ID de la orden
+   * @param {string} baseUrl - URL base del sistema
+   * @returns {Promise} Token y URLs generados
+   */
+  async generarTokenAprobacion(ordenId, baseUrl) {
+    return this.post(`/aprobacion/generar-token/${ordenId}`, { baseUrl });
+  }
+
+  /**
+   * Obtener detalles de una orden usando el token
+   * @param {string} token - Token de aprobación
+   * @returns {Promise} Detalles de la orden
+   */
+  async getOrdenByToken(token) {
+    return this.get(`/aprobacion/${token}`);
+  }
+
+  /**
+   * Aprobar una orden
+   * @param {string} token - Token de aprobación
+   * @param {Object} data - Datos de aprobación (nombre, observaciones)
+   * @returns {Promise} Respuesta de aprobación
+   */
+  async aprobarOrden(token, data) {
+    return this.post(`/aprobacion/${token}/aprobar`, data);
+  }
+
+  /**
+   * Rechazar una orden
+   * @param {string} token - Token de rechazo
+   * @param {Object} data - Datos de rechazo (nombre, motivo)
+   * @returns {Promise} Respuesta de rechazo
+   */
+  async rechazarOrden(token, data) {
+    return this.post(`/aprobacion/${token}/rechazar`, data);
+  }
+
+  /**
+   * Marcar orden como completada
+   * @param {number} ordenId - ID de la orden
+   * @param {string} completadaPor - Nombre de quien completa
+   * @returns {Promise} Orden actualizada
+   */
+  async completarOrden(ordenId, completadaPor) {
+    return this.put(`/ordenes/${ordenId}/completar`, { completada_por: completadaPor });
+  }
 }
 
 // Crear instancia singleton

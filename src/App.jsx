@@ -96,13 +96,17 @@ const App = () => {
         total: calcularTotal()
       };
 
-      await guardarOrden(ordenData);
+      const respuesta = await guardarOrden(ordenData);
       
       // Mostrar mensaje de éxito
       alert('Orden de compra guardada exitosamente en la base de datos');
+      
+      // Retornar la respuesta para que GenerarOrden pueda capturar el ID
+      return respuesta;
     } catch (err) {
       console.error('Error guardando orden:', err);
       alert('Error al guardar la orden: ' + err.message);
+      throw err;
     }
   };
 

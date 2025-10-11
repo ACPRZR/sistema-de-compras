@@ -9,12 +9,14 @@ import {
   XMarkIcon,
   TrashIcon,
   CheckIcon,
-  XCircleIcon
+  XCircleIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import Button from '../UI/Button';
 import Input from '../UI/Input';
 import { useOrdenesPendientes } from '../../hooks/useOrdenesPendientes';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import apiService from '../../services/api';
 
 const OrdenesPendientes = () => {
   const {
@@ -77,6 +79,20 @@ const OrdenesPendientes = () => {
         setMostrarAcciones(false);
       } catch (err) {
         console.error('Error eliminando orden:', err);
+      }
+    }
+  };
+
+  const handleCompletarOrden = async (orden) => {
+    if (window.confirm('¿Confirmas que esta orden ha sido completada?')) {
+      try {
+        await apiService.completarOrden(orden.id, 'Álvaro Pérez Román');
+        setMostrarAcciones(false);
+        // Recargar la lista
+        window.location.reload();
+      } catch (err) {
+        console.error('Error completando orden:', err);
+        alert('Error al completar la orden: ' + err.message);
       }
     }
   };
@@ -344,34 +360,50 @@ const OrdenesPendientes = () => {
                 <p><strong>Estado:</strong> {getEstadoLabel(ordenSeleccionada.estado_nombre?.toLowerCase())}</p>
               </div>
               
-              <div className="flex space-x-2 pt-4">
-                <Button 
-                  variant="success" 
-                  size="sm"
-                  onClick={() => handleAprobarOrden(ordenSeleccionada)}
-                  className="flex-1"
-                >
-                  <CheckIcon className="w-4 h-4 mr-2" />
-                  Aprobar
-                </Button>
-                <Button 
-                  variant="danger" 
-                  size="sm"
-                  onClick={() => handleRechazarOrden(ordenSeleccionada)}
-                  className="flex-1"
-                >
-                  <XCircleIcon className="w-4 h-4 mr-2" />
-                  Rechazar
-                </Button>
-                <Button 
-                  variant="danger" 
-                  size="sm"
-                  onClick={() => handleEliminarOrden(ordenSeleccionada)}
-                  className="flex-1"
-                >
-                  <TrashIcon className="w-4 h-4 mr-2" />
-                  Eliminar
-                </Button>
+              <div className="space-y-2 pt-4">
+                {/* Botón de completar (solo para órdenes aprobadas) */}
+                {ordenSeleccionada.estado_id === 2 && (
+                  <Button 
+                    variant="success" 
+                    size="sm"
+                    onClick={() => handleCompletarOrden(ordenSeleccionada)}
+                    className="w-full"
+                  >
+                    <CheckCircleIcon className="w-4 h-4 mr-2" />
+                    Marcar como Completada
+                  </Button>
+                )}
+
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="success" 
+                    size="sm"
+                    onClick={() => handleAprobarOrden(ordenSeleccionada)}
+                    className="flex-1"
+                    disabled={ordenSeleccionada.estado_id !== 1}
+                  >
+                    <CheckIcon className="w-4 h-4 mr-2" />
+                    Aprobar
+                  </Button>
+                  <Button 
+                    variant="danger" 
+                    size="sm"
+                    onClick={() => handleRechazarOrden(ordenSeleccionada)}
+                    className="flex-1"
+                  >
+                    <XCircleIcon className="w-4 h-4 mr-2" />
+                    Rechazar
+                  </Button>
+                  <Button 
+                    variant="danger" 
+                    size="sm"
+                    onClick={() => handleEliminarOrden(ordenSeleccionada)}
+                    className="flex-1"
+                  >
+                    <TrashIcon className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

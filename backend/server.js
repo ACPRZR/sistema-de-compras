@@ -24,6 +24,9 @@ const condicionesPagoRoutes = require('./routes/condiciones-pago');
 const unidadesAutorizaRoutes = require('./routes/unidades-autoriza');
 const configuracionEmpresaRoutes = require('./routes/configuracion-empresa');
 
+// Rutas públicas (sin autenticación)
+const aprobacionRoutes = require('./routes/aprobacion');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -118,6 +121,9 @@ app.get('/', (req, res) => {
     }
   });
 });
+
+// Rutas públicas (deben ir primero, antes de cualquier middleware de autenticación)
+app.use('/api/aprobacion', aprobacionRoutes);
 
 // Rutas de la API
 app.use('/api/ordenes', ordenesRoutes);
