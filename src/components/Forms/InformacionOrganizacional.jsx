@@ -2,20 +2,41 @@ import React from 'react';
 import { BuildingOffice2Icon, MapPinIcon, FolderIcon } from '@heroicons/react/24/outline';
 import Select from '../UI/Select';
 import Input from '../UI/Input';
-import { UNIDADES_NEGOCIO, UNIDADES_AUTORIZA, UBICACIONES_ENTREGA } from '../../utils/constants';
+import { useMaestros } from '../../hooks/useMaestros';
 
 const InformacionOrganizacional = ({ formData, onFormChange }) => {
+  const { 
+    maestros, 
+    loading, 
+    getUnidadesNegocioOptions,
+    getUnidadesAutorizaOptions,
+    getUbicacionesEntregaOptions
+  } = useMaestros();
+  
   const handleChange = (field, value) => {
     onFormChange(field, value);
     
     // Auto-completar dirección de entrega cuando se selecciona ubicación
     if (field === 'ubicacionEntrega') {
-      const ubicacion = UBICACIONES_ENTREGA.find(u => u.value === value);
+      const ubicacion = maestros.ubicacionesEntrega.find(u => u.codigo === value);
       if (ubicacion) {
         onFormChange('lugarEntrega', ubicacion.direccion);
       }
     }
   };
+  
+  // Obtener opciones formateadas desde el hook
+  const unidadesNegocioOptions = getUnidadesNegocioOptions();
+  const unidadesAutorizaOptions = getUnidadesAutorizaOptions();
+  const ubicacionesEntregaOptions = getUbicacionesEntregaOptions();
+  
+  console.log('🔍 Opciones generadas en InformacionOrganizacional:', {
+    unidadesNegocio: unidadesNegocioOptions.length,
+    unidadesAutoriza: unidadesAutorizaOptions.length,
+    ubicaciones: ubicacionesEntregaOptions.length,
+    loading,
+    unidadesNegocioSample: unidadesNegocioOptions[0]
+  });
 
   return (
     <div className="card">
@@ -37,18 +58,20 @@ const InformacionOrganizacional = ({ formData, onFormChange }) => {
           <Select
             label="Unidad de Negocio"
             value={formData.unidadNegocio || ''}
-            onChange={(e) => handleChange('unidadNegocio', e.target.value)}
-            options={UNIDADES_NEGOCIO}
+            onChange={(value) => handleChange('unidadNegocio', value)}
+            options={unidadesNegocioOptions}
             placeholder="Seleccione unidad"
+            disabled={loading}
             required
           />
           
           <Select
             label="Unidad que Autoriza"
             value={formData.unidadAutoriza || ''}
-            onChange={(e) => handleChange('unidadAutoriza', e.target.value)}
-            options={UNIDADES_AUTORIZA}
+            onChange={(value) => handleChange('unidadAutoriza', value)}
+            options={unidadesAutorizaOptions}
             placeholder="Seleccione autorización"
+            disabled={loading}
             required
           />
         </div>
@@ -59,9 +82,10 @@ const InformacionOrganizacional = ({ formData, onFormChange }) => {
             <Select
               label="Ubicación de Entrega"
               value={formData.ubicacionEntrega || ''}
-              onChange={(e) => handleChange('ubicacionEntrega', e.target.value)}
-              options={UBICACIONES_ENTREGA}
+              onChange={(value) => handleChange('ubicacionEntrega', value)}
+              options={ubicacionesEntregaOptions}
               placeholder="Seleccione ubicación"
+              disabled={loading}
               required
             />
             <p className="text-xs text-secondary-500 flex items-center">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   PlusIcon, 
   TrashIcon, 
@@ -9,11 +9,9 @@ import {
 import Button from '../UI/Button';
 import Input from '../UI/Input';
 import Select from '../UI/Select';
-import { getTemplatesByCategoria } from '../../data/templates';
-import { UNIDADES_MEDIDA } from '../../utils/constants';
-import { formatCurrency } from '../../utils/formatters';
+import apiService from '../../services/api';
 
-const ItemsOrden = ({ 
+const ItemsOrdenDB = ({ 
   categoriaCompra, 
   items, 
   contadorItems, 
@@ -26,15 +24,64 @@ const ItemsOrden = ({
 
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState([]);
+  const [unidadesMedida, setUnidadesMedida] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingUnidades, setLoadingUnidades] = useState(true);
+  
+
+  // Cargar unidades de medida al iniciar
+  useEffect(() => {
+    const loadUnidades = async () => {
+      setLoadingUnidades(true);
+      try {
+        const unidadesResult = await apiService.getUnidadesMedida();
+        setUnidadesMedida(unidadesResult.data || []);
+      } catch (error) {
+        console.error('Error cargando unidades de medida:', error);
+        setUnidadesMedida([]);
+      } finally {
+        setLoadingUnidades(false);
+      }
+    };
+
+    loadUnidades();
+  }, []);
 
   // Cargar templates cuando cambie la categoría
-  React.useEffect(() => {
-    if (categoriaCompra) {
-      const templatesCategoria = getTemplatesByCategoria(categoriaCompra);
-      setTemplates(templatesCategoria);
-    } else {
+  useEffect(() => {
+    const loadTemplates = async () => {
+      if (!categoriaCompra) {
+        setTemplates([]);
+        return;
+      }
+
+      // TODO: Implementar endpoint /api/productos/categoria/:id en el backend
+      // Por ahora, dejamos los templates vacíos para evitar error 404
+      console.log('ℹ️ Templates deshabilitados - Endpoint no implementado');
       setTemplates([]);
-    }
+      
+      /* CÓDIGO ORIGINAL - Comentado hasta que se implemente el endpoint
+      setLoading(true);
+      try {
+        // Obtener categorías primero para encontrar el ID
+        const categoriasResult = await apiService.getCategorias();
+        const categoria = categoriasResult.data.find(c => c.codigo === categoriaCompra);
+        
+        if (categoria) {
+          // Cargar productos/templates por categoría
+          const productosResult = await apiService.getProductosByCategoria(categoria.id);
+          setTemplates(productosResult.data || []);
+        }
+      } catch (error) {
+        console.error('Error cargando templates:', error);
+        setTemplates([]);
+      } finally {
+        setLoading(false);
+      }
+      */
+    };
+
+    loadTemplates();
   }, [categoriaCompra]);
 
   const handleItemChange = (itemId, field, value) => {
@@ -51,7 +98,7 @@ const ItemsOrden = ({
     actualizarItem(itemId, updates);
   };
 
-  const agregarItemTemplate = (template) => {
+  const agregarItemTemplate = async (template) => {
     agregarItem();
     const nuevoItemId = `item_${contadorItems + 1}`;
     
@@ -59,9 +106,10 @@ const ItemsOrden = ({
     setTimeout(() => {
       actualizarItem(nuevoItemId, {
         descripcion: template.descripcion,
-        unidad: template.unidad,
-        precio: template.precio,
-        subtotal: template.precio
+        unidad: template.unidad_nombre || 'Unidad',
+        precio: template.precio_base,
+        subtotal: template.precio_base,
+        producto_id: template.id
       });
     }, 100);
     
@@ -70,10 +118,16 @@ const ItemsOrden = ({
 
   const importarCSV = () => {
     // Funcionalidad no necesaria para uso local
-    console.log('Importación CSV no disponible en versión local');
+    alert('Importación CSV no disponible en versión local');
   };
 
   const total = calcularTotal();
+
+  // Preparar opciones de unidades de medida
+  const opcionesUnidades = unidadesMedida.map(unidad => ({
+    value: unidad.nombre,
+    label: unidad.nombre
+  }));
 
   return (
     <div className="card">
@@ -107,6 +161,7 @@ const ItemsOrden = ({
                 size="sm"
                 onClick={() => setShowTemplates(true)}
                 icon={ClipboardDocumentListIcon}
+                disabled={loading}
               >
                 Templates
               </Button>
@@ -125,6 +180,7 @@ const ItemsOrden = ({
       </div>
       
       <div className="card-body space-y-4">
+
         {/* Lista de items */}
         {Object.keys(items).length === 0 ? (
           <div className="text-center py-12">
@@ -145,12 +201,12 @@ const ItemsOrden = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {Object.entries(items).map(([itemId, item]) => (
+            {Object.entries(items).map(([itemId, item], index) => (
               <div key={itemId} className="bg-secondary-50 rounded-lg p-4 border border-secondary-200 hover:border-primary-300 transition-colors duration-200">
                 {/* Header del item */}
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-gray-900">
-                    Item {itemId.split('_')[1]}
+                    Item {index + 1}
                   </h4>
                   <button
                     onClick={() => eliminarItem(itemId)}
@@ -178,8 +234,10 @@ const ItemsOrden = ({
                     <Select
                       label="Unidad"
                       value={item.unidad || 'Unidad'}
-                      onChange={(e) => handleItemChange(itemId, 'unidad', e.target.value)}
-                      options={UNIDADES_MEDIDA}
+                      onChange={(value) => handleItemChange(itemId, 'unidad', value)}
+                      options={loadingUnidades ? [] : opcionesUnidades}
+                      disabled={loading || loadingUnidades}
+                      placeholder={loadingUnidades ? "Cargando unidades..." : "Seleccione una opción"}
                     />
                   </div>
 
@@ -215,7 +273,11 @@ const ItemsOrden = ({
                   <div className="w-48">
                     <Input
                       label="Subtotal"
-                      value={formatCurrency(item.subtotal || 0)}
+                      value={new Intl.NumberFormat('es-PE', {
+                        style: 'currency',
+                        currency: 'PEN',
+                        minimumFractionDigits: 2
+                      }).format(item.subtotal || 0)}
                       readOnly
                       className="bg-secondary-100 font-semibold text-right"
                     />
@@ -243,7 +305,11 @@ const ItemsOrden = ({
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-primary-600">
-                  {formatCurrency(total)}
+                  {new Intl.NumberFormat('es-PE', {
+                    style: 'currency',
+                    currency: 'PEN',
+                    minimumFractionDigits: 2
+                  }).format(total)}
                 </p>
                 <p className="text-xs text-primary-700">Soles peruanos</p>
               </div>
@@ -269,28 +335,39 @@ const ItemsOrden = ({
             </div>
             
             <div className="p-6 max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-1 gap-3">
-                {templates.map((template) => (
-                  <div
-                    key={template.id}
-                    className="flex items-center justify-between p-3 border border-secondary-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{template.descripcion}</h4>
-                      <p className="text-sm text-secondary-600">
-                        {template.unidad} • {formatCurrency(template.precio)} • {template.proveedor}
-                      </p>
-                    </div>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => agregarItemTemplate(template)}
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-secondary-600">Cargando templates...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {templates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="flex items-center justify-between p-3 border border-secondary-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200"
                     >
-                      Agregar
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{template.descripcion}</h4>
+                        <p className="text-sm text-secondary-600">
+                          {template.unidad_nombre} • {new Intl.NumberFormat('es-PE', {
+                            style: 'currency',
+                            currency: 'PEN',
+                            minimumFractionDigits: 2
+                          }).format(template.precio_base)} • {template.proveedor_nombre || 'Sin proveedor'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => agregarItemTemplate(template)}
+                      >
+                        Agregar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -299,4 +376,4 @@ const ItemsOrden = ({
   );
 };
 
-export default ItemsOrden;
+export default ItemsOrdenDB;

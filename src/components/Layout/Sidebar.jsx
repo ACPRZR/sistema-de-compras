@@ -7,8 +7,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
+import { useOrdenesCount } from '../../hooks/useOrdenesCount';
 
 const Sidebar = ({ isCollapsed, onToggle, currentPage, onNavigate }) => {
+  const { counts } = useOrdenesCount();
+
   const menuItems = [
     {
       id: 'nueva-orden',
@@ -20,7 +23,7 @@ const Sidebar = ({ isCollapsed, onToggle, currentPage, onNavigate }) => {
       id: 'ordenes-pendientes',
       label: 'Órdenes Pendientes',
       icon: ClipboardDocumentListIcon,
-      badge: '3'
+      badge: counts.pendientes > 0 ? counts.pendientes.toString() : null
     },
     {
       id: 'historial',

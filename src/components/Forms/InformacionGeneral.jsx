@@ -3,23 +3,71 @@ import {
   DocumentTextIcon, 
   CalendarDaysIcon, 
   TagIcon,
-  ClockIcon 
+  ClockIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import Select from '../UI/Select';
 import Input from '../UI/Input';
-import { CATEGORIAS_COMPRA, TIPOS_ORDEN } from '../../utils/constants';
-import { generateOCNumber, getDefaultRequerimientoDate } from '../../utils/formatters';
+import { useMaestros } from '../../hooks/useMaestros';
+import { getDefaultRequerimientoDate } from '../../utils/formatters';
+import apiService from '../../services/api';
 
 const InformacionGeneral = ({ formData, onFormChange }) => {
   const [numeroOC, setNumeroOC] = useState('');
+  const [aprobadores, setAprobadores] = useState([]);
+  const [loadingAprobadores, setLoadingAprobadores] = useState(true);
+  const { 
+    loading, 
+    getCategoriasOptions,
+    getTiposOrdenOptions
+  } = useMaestros();
+  
+  // Obtener opciones formateadas desde el hook
+  const categoriasOptions = getCategoriasOptions();
+  const tiposOrdenOptions = getTiposOrdenOptions();
+  
+  console.log('🔍 Opciones generadas en InformacionGeneral:', {
+    categorias: categoriasOptions.length,
+    tiposOrden: tiposOrdenOptions.length,
+    loading,
+    categoriasSample: categoriasOptions[0]
+  });
 
   useEffect(() => {
-    // Generar número de OC automáticamente solo una vez
-    if (!numeroOC) {
-      const nuevoNumero = generateOCNumber();
-      setNumeroOC(nuevoNumero);
-      onFormChange('numeroOC', nuevoNumero);
-    }
+    // Generar número de OC desde la base de datos
+    const generarNumeroOC = async () => {
+      if (!numeroOC) {
+        try {
+          console.log('📋 Solicitando número de OC desde la base de datos...');
+          const response = await apiService.getSiguienteNumeroOC();
+          
+          if (response.success) {
+            const nuevoNumero = response.data.numero;
+            console.log(`✅ Número de OC generado: ${nuevoNumero}`);
+            setNumeroOC(nuevoNumero);
+            onFormChange('numeroOC', nuevoNumero);
+          } else {
+            console.error('❌ Error al generar número de OC:', response.message);
+            // Fallback: usar método local si falla el servidor
+            const { generateOCNumber } = require('../../utils/formatters');
+            const nuevoNumero = generateOCNumber();
+            console.warn('⚠️ Usando número de OC local:', nuevoNumero);
+            setNumeroOC(nuevoNumero);
+            onFormChange('numeroOC', nuevoNumero);
+          }
+        } catch (error) {
+          console.error('❌ Error conectando con el servidor:', error);
+          // Fallback: usar método local si falla el servidor
+          const { generateOCNumber } = require('../../utils/formatters');
+          const nuevoNumero = generateOCNumber();
+          console.warn('⚠️ Usando número de OC local:', nuevoNumero);
+          setNumeroOC(nuevoNumero);
+          onFormChange('numeroOC', nuevoNumero);
+        }
+      }
+    };
+
+    generarNumeroOC();
     
     // Establecer fecha de requerimiento por defecto solo si no existe
     if (!formData.fechaRequerimiento) {
@@ -27,6 +75,30 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
       onFormChange('fechaRequerimiento', fechaRequerimiento);
     }
   }, [formData.fechaRequerimiento, numeroOC, onFormChange]);
+
+  // Cargar aprobadores
+  useEffect(() => {
+    const cargarAprobadores = async () => {
+      try {
+        const response = await apiService.getAprobadores();
+        if (response.success) {
+          setAprobadores(response.data);
+          console.log('👔 Aprobadores cargados:', response.data);
+        }
+      } catch (error) {
+        console.error('Error cargando aprobadores:', error);
+      } finally {
+        setLoadingAprobadores(false);
+      }
+    };
+
+    cargarAprobadores();
+  }, []);
+
+  // Debug: Log cuando cambie el aprobadorId
+  useEffect(() => {
+    console.log('🔄 aprobadorId cambió:', formData.aprobadorId);
+  }, [formData.aprobadorId]);
 
   const handleCategoriaChange = (categoria) => {
     onFormChange('categoriaCompra', categoria);
@@ -83,9 +155,10 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
           <Select
             label="Categoría de Compra"
             value={formData.categoriaCompra || ''}
-            onChange={(e) => handleCategoriaChange(e.target.value)}
-            options={CATEGORIAS_COMPRA}
+            onChange={(value) => handleCategoriaChange(value)}
+            options={categoriasOptions}
             placeholder="Seleccione categoría"
+            disabled={loading}
             required
           />
         </div>
@@ -96,8 +169,9 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
             <Select
               label="Tipo de Orden"
               value={formData.tipoOC || 'standard'}
-              onChange={(e) => onFormChange('tipoOC', e.target.value)}
-              options={TIPOS_ORDEN}
+              onChange={(value) => onFormChange('tipoOC', value)}
+              options={tiposOrdenOptions}
+              disabled={loading}
             />
             <div className="text-xs text-secondary-500 space-y-1">
               <p className="flex items-center">
@@ -124,6 +198,43 @@ const InformacionGeneral = ({ formData, onFormChange }) => {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Tercera fila - Aprobador */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2 mb-3">
+            <UserCircleIcon className="w-5 h-5 text-blue-600" />
+            <h4 className="text-sm font-semibold text-blue-900">Aprobación Requerida</h4>
+          </div>
+          
+          <Select
+            label="¿Quién debe aprobar esta orden? *"
+            value={formData.aprobadorId || ''}
+            onChange={(value) => {
+              console.log('👤 Aprobador seleccionado:', value);
+              console.log('👤 Tipo de valor:', typeof value);
+              console.log('👤 Valor antes de onFormChange:', formData.aprobadorId);
+              
+              // Usar setTimeout para asegurar que el estado se actualice
+              onFormChange('aprobadorId', value);
+              
+              // Verificar después de un pequeño delay
+              setTimeout(() => {
+                console.log('👤 Después de onFormChange (con delay), formData.aprobadorId:', formData.aprobadorId);
+              }, 100);
+            }}
+            options={aprobadores.map(aprobador => ({
+              value: aprobador.id.toString(),
+              label: `${aprobador.nombre_completo} - ${aprobador.cargo}`
+            }))}
+            placeholder=""
+            disabled={loadingAprobadores}
+            required
+          />
+          
+          <p className="text-xs text-blue-700 mt-2">
+            ℹ️ Esta persona recibirá el link de WhatsApp para aprobar la orden.
+          </p>
         </div>
 
       </div>

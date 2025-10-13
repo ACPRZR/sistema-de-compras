@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useCallback, useMemo } from 'react';
 
 /**
  * Hook para manejar el timeline de estados de la orden
@@ -7,51 +6,23 @@ import { useLocalStorage } from './useLocalStorage';
 export const useTimeline = () => {
   const [estadoActual, setEstadoActual] = useState('creada');
   
-  // Función para migrar datos del sistema anterior
-  const migrarDatosTimeline = (datos) => {
-    const nuevosDatos = {
-      creada: { 
-        fecha: new Date().toLocaleString('es-PE'), 
-        responsable: 'A. Pérez', 
-        completado: true 
-      },
-      lista: { 
-        fecha: null, 
-        responsable: 'A. Pérez', 
-        completado: false 
-      },
-      completada: { 
-        fecha: null, 
-        responsable: 'A. Pérez', 
-        completado: false 
-      }
-    };
-
-    // Si hay datos antiguos, migrar el estado actual
-    if (datos && typeof datos === 'object') {
-      if (datos.creada?.completado) {
-        nuevosDatos.creada = { ...nuevosDatos.creada, ...datos.creada };
-      }
-      if (datos.aprobada?.completado || datos.enviada?.completado) {
-        nuevosDatos.lista = { 
-          fecha: datos.aprobada?.fecha || datos.enviada?.fecha || new Date().toLocaleString('es-PE'),
-          responsable: 'A. Pérez', 
-          completado: true 
-        };
-      }
-      if (datos.completada?.completado) {
-        nuevosDatos.completada = { 
-          fecha: datos.completada.fecha,
-          responsable: 'A. Pérez', 
-          completado: true 
-        };
-      }
+  const [timelineData, setTimelineData] = useState({
+    creada: { 
+      fecha: new Date().toLocaleString('es-PE'), 
+      responsable: 'A. Pérez', 
+      completado: true 
+    },
+    lista: { 
+      fecha: null, 
+      responsable: 'A. Pérez', 
+      completado: false 
+    },
+    completada: { 
+      fecha: null, 
+      responsable: 'A. Pérez', 
+      completado: false 
     }
-
-    return nuevosDatos;
-  };
-
-  const [timelineData, setTimelineData] = useLocalStorage('timeline_data', migrarDatosTimeline);
+  });
 
   const estados = useMemo(() => ['creada', 'lista', 'completada'], []);
 
@@ -119,15 +90,7 @@ export const useTimeline = () => {
     
     setTimelineData(newTimelineData);
     setEstadoActual('creada');
-  }, [setTimelineData]);
-
-  // Limpiar datos antiguos del localStorage
-  const limpiarDatosAntiguos = useCallback(() => {
-    // Limpiar datos del sistema anterior
-    localStorage.removeItem('timeline_data');
-    // Reiniciar con datos nuevos
-    reiniciarTimeline();
-  }, [reiniciarTimeline]);
+  }, []);
 
   // Actualizar responsable del comprador (simplificado para uso local)
   const actualizarComprador = useCallback((comprador) => {
@@ -139,30 +102,12 @@ export const useTimeline = () => {
         responsable: 'A. Pérez'
       }
     }));
-  }, [setTimelineData]);
+  }, []);
 
   // Calcular progreso del timeline
   const progreso = useMemo(() => {
     return ((estadoActualIndex + 1) / estados.length) * 100;
   }, [estadoActualIndex, estados.length]);
-
-  // Limpiar datos antiguos al cargar
-  React.useEffect(() => {
-    // Verificar si hay datos del sistema anterior
-    const datosAntiguos = localStorage.getItem('timeline_data');
-    if (datosAntiguos) {
-      try {
-        const parsed = JSON.parse(datosAntiguos);
-        // Si tiene estados del sistema anterior, limpiar
-        if (parsed.revision || parsed.aprobada || parsed.enviada) {
-          limpiarDatosAntiguos();
-        }
-      } catch (error) {
-        // Si hay error al parsear, limpiar
-        limpiarDatosAntiguos();
-      }
-    }
-  }, [limpiarDatosAntiguos]);
 
   return {
     estadoActual,
@@ -173,7 +118,6 @@ export const useTimeline = () => {
     progreso,
     avanzarEstado,
     reiniciarTimeline,
-    limpiarDatosAntiguos,
     actualizarComprador
   };
 };

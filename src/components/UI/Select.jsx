@@ -9,6 +9,7 @@ const Select = forwardRef(({
   options = [],
   placeholder = 'Seleccione una opción',
   className = '',
+  onChange,
   ...props 
 }, ref) => {
   return (
@@ -30,6 +31,14 @@ const Select = forwardRef(({
               : 'border-secondary-300 text-gray-900 focus:ring-primary-500 focus:border-primary-500',
             className
           )}
+          onChange={(e) => {
+            console.log('🎯 Select onChange ejecutándose:', e);
+            if (onChange) {
+              const value = e.target.value;
+              console.log('🎯 Llamando onChange con valor:', value);
+              onChange(value);
+            }
+          }}
           {...props}
         >
           {placeholder && (

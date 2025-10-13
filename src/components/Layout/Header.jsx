@@ -3,9 +3,12 @@ import {
   BuildingOffice2Icon, 
   UserCircleIcon
 } from '@heroicons/react/24/outline';
-import { EMPRESA_CONFIG } from '../../utils/constants';
+import { useMaestros } from '../../hooks/useMaestros';
 
 const Header = () => {
+  const { maestros } = useMaestros();
+  const nombreEmpresa = maestros.configuracionEmpresa?.nombre || 'Las Asambleas de Dios del Perú';
+  
   return (
     <header className="bg-white shadow-soft border-b border-secondary-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,7 +24,7 @@ const Header = () => {
                   Sistema de Órdenes de Compra
                 </h1>
                 <p className="text-sm text-secondary-600">
-                  {EMPRESA_CONFIG.nombre}
+                  {nombreEmpresa}
                 </p>
               </div>
             </div>
