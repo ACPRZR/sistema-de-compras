@@ -1,4 +1,13 @@
 version: 1
+environment:
+  variables:
+    DB_HOST: "tu-endpoint-rds.region.rds.amazonaws.com"
+    DB_PORT: "5432"
+    DB_NAME: "postgres"
+    DB_USER: "postgres"
+    DB_PASSWORD: "Elgatopanzon7"
+    DB_SSL: "true"
+    NODE_ENV: "production"
 backend:
   phases:
     build:
