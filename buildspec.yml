@@ -1,7 +1,7 @@
 version: 1
 environment:
   variables:
-    DB_HOST: "tu-endpoint-rds.region.rds.amazonaws.com"
+    DB_HOST: "sistema-ordenes-db.c5mmcm4asxvz.sa-east-1.rds.amazonaws.com"
     DB_PORT: "5432"
     DB_NAME: "postgres"
     DB_USER: "postgres"
