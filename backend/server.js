@@ -27,6 +27,9 @@ const configuracionEmpresaRoutes = require('./routes/configuracion-empresa');
 // Rutas públicas (sin autenticación)
 const aprobacionRoutes = require('./routes/aprobacion');
 
+// Rutas de secuencias/contadores
+const secuenciasRoutes = require('./routes/secuencias');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -140,6 +143,9 @@ app.use('/api/ubicaciones-entrega', ubicacionesEntregaRoutes);
 app.use('/api/condiciones-pago', condicionesPagoRoutes);
 app.use('/api/unidades-autoriza', unidadesAutorizaRoutes);
 app.use('/api/configuracion-empresa', configuracionEmpresaRoutes);
+
+// Rutas de secuencias/contadores
+app.use('/api/secuencias', secuenciasRoutes);
 
 // =====================================================
 // MANEJO DE ERRORES

@@ -66,7 +66,7 @@ async function generateOrderPdf(ordenData, items, total, visualPreview = null) {
         doc.fontSize(12).font('Helvetica')
            .text(`Número: ${ordenData.numero_oc}`, 50, doc.y)
            .text(`Proveedor: ${ordenData.proveedor_nombre}`, 50, doc.y + 20)
-           .text(`Total: S/ ${total.toFixed(2)}`, 50, doc.y + 40);
+           .text(`Total: S/ ${parseFloat(total || 0).toFixed(2)}`, 50, doc.y + 40);
         
         doc.y += 80;
         imageHeight = 80; // Altura estimada del contenido básico
@@ -114,6 +114,15 @@ async function generateOrderPdf(ordenData, items, total, visualPreview = null) {
            .text('FIRMA', 50, newSignatureY + sigHeight + 10, { align: 'center', width: sigWidth })
            .text('SELLO', 50 + sigWidth + sigSpacing, newSignatureY + sigHeight + 10, { align: 'center', width: sigWidth });
         
+        // Información del aprobador (si está disponible)
+        if (ordenData.aprobador_nombre) {
+          doc.fontSize(9).font('Helvetica').fillColor('#333333')
+             .text(ordenData.aprobador_nombre, 50, newSignatureY + sigHeight + 30, { align: 'center', width: sigWidth });
+          doc.fontSize(8).fillColor('#666666')
+             .text(ordenData.aprobador_cargo || '', 50, newSignatureY + sigHeight + 45, { align: 'center', width: sigWidth })
+             .text(`DNI: ${ordenData.aprobador_dni || 'N/A'}`, 50, newSignatureY + sigHeight + 58, { align: 'center', width: sigWidth });
+        }
+        
         // Footer en la nueva página
         const footerY = newSignatureY + sigHeight + 40;
         doc.fontSize(8).font('Helvetica')
@@ -150,6 +159,15 @@ async function generateOrderPdf(ordenData, items, total, visualPreview = null) {
         doc.fillColor('#666666').fontSize(10).font('Helvetica-Bold')
            .text('FIRMA', 50, signatureY + sigHeight + 10, { align: 'center', width: sigWidth })
            .text('SELLO', 50 + sigWidth + sigSpacing, signatureY + sigHeight + 10, { align: 'center', width: sigWidth });
+        
+        // Información del aprobador (si está disponible)
+        if (ordenData.aprobador_nombre) {
+          doc.fontSize(9).font('Helvetica').fillColor('#333333')
+             .text(ordenData.aprobador_nombre, 50, signatureY + sigHeight + 30, { align: 'center', width: sigWidth });
+          doc.fontSize(8).fillColor('#666666')
+             .text(ordenData.aprobador_cargo || '', 50, signatureY + sigHeight + 45, { align: 'center', width: sigWidth })
+             .text(`DNI: ${ordenData.aprobador_dni || 'N/A'}`, 50, signatureY + sigHeight + 58, { align: 'center', width: sigWidth });
+        }
         
         // Footer
         const footerY = signatureY + sigHeight + 40;

@@ -208,7 +208,10 @@ const Historial = () => {
                     Orden
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Proveedor
+                    Unidad de Negocio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Categoría
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                     Fecha Creación
@@ -218,9 +221,6 @@ const Historial = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                     Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Fecha Finalización
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                     Responsable
@@ -244,7 +244,10 @@ const Historial = () => {
                         <div className="text-sm font-medium text-gray-900">{orden.numero_oc}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{orden.proveedor_nombre || orden.proveedor_nombre_completo}</div>
+                        <div className="text-sm text-gray-900">{orden.unidad_negocio_nombre || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{orden.categoria_nombre || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
@@ -261,11 +264,6 @@ const Historial = () => {
                           {getEstadoIconComponent(orden.estado_nombre)}
                           <span className="ml-1">{getEstadoLabel(orden.estado_nombre)}</span>
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatearFecha(orden.updated_at || orden.fecha_creacion)}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{orden.comprador_nombre || 'N/A'}</div>

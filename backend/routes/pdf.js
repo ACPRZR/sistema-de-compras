@@ -16,11 +16,15 @@ router.get('/orden/:id', async (req, res) => {
         oc.*,
         c.nombre as categoria_nombre,
         cp.nombre as condiciones_pago_nombre,
-        u.nombre as comprador_nombre
+        u.nombre_completo as comprador_nombre,
+        aprobador.nombre_completo as aprobador_nombre,
+        aprobador.cargo as aprobador_cargo,
+        aprobador.dni as aprobador_dni
       FROM ordenes_compra.ordenes_compra oc
       LEFT JOIN ordenes_compra.categorias_compra c ON oc.categoria_id = c.id
       LEFT JOIN ordenes_compra.condiciones_pago cp ON oc.condiciones_pago_id = cp.id
       LEFT JOIN ordenes_compra.usuarios u ON oc.comprador_responsable_id = u.id
+      LEFT JOIN ordenes_compra.usuarios aprobador ON oc.aprobador_id = aprobador.id
       WHERE oc.id = $1
     `;
     
@@ -49,23 +53,23 @@ router.get('/orden/:id', async (req, res) => {
     const itemsResult = await pool.query(itemsQuery, [id]);
     const items = itemsResult.rows.map(item => ({
       descripcion: item.descripcion,
-      cantidad: item.cantidad,
+      cantidad: parseFloat(item.cantidad) || 0,
       unidad: item.unidad_nombre || 'Unidad',
-      precio: item.precio_unitario,
-      subtotal: item.subtotal
+      precio: parseFloat(item.precio_unitario) || 0,
+      subtotal: parseFloat(item.subtotal) || 0
     }));
     
-    // Calcular total
-    const total = items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    // Calcular total (asegurarse de que sea un número)
+    const total = parseFloat(items.reduce((sum, item) => sum + (item.subtotal || 0), 0));
     
     // Generar PDF
     const pdfBuffer = await generateOrderPdf(orden, items, total);
     
-    // Configurar headers para descarga
+    // Configurar headers para mostrar en navegador
     const filename = `OC-${orden.numero_oc}-${new Date().toISOString().split('T')[0]}.pdf`;
     
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`); // Cambiado de "attachment" a "inline"
     res.setHeader('Content-Length', pdfBuffer.length);
     
     res.send(pdfBuffer);

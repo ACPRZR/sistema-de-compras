@@ -34,6 +34,14 @@ class ApiService {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Error del servidor:', errorData);
+        
+        // Si hay errores de validación, mostrarlos en detalle
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors.map(err => `- ${err.msg} (${err.param})`).join('\n');
+          throw new Error(`Errores de validación:\n${errorMessages}`);
+        }
+        
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
@@ -299,6 +307,25 @@ class ApiService {
   }
 
   // =====================================================
+  // MÉTODOS DE SECUENCIAS/CONTADORES
+  // =====================================================
+
+  // Obtener siguiente número de OC (incrementa el contador)
+  async getSiguienteNumeroOC() {
+    return this.request('/secuencias/siguiente-numero-oc');
+  }
+
+  // Preview del siguiente número de OC (NO incrementa el contador)
+  async getPreviewNumeroOC() {
+    return this.request('/secuencias/preview-numero-oc');
+  }
+
+  // Resetear contador de OC (solo desarrollo/testing)
+  async resetContadorOC(anio = new Date().getFullYear()) {
+    return this.post('/secuencias/reset-contador-oc', { anio });
+  }
+
+  // =====================================================
   // MÉTODOS DE UTILIDAD
   // =====================================================
 
@@ -495,6 +522,24 @@ class ApiService {
    */
   async completarOrden(ordenId, completadaPor) {
     return this.put(`/ordenes/${ordenId}/completar`, { completada_por: completadaPor });
+  }
+
+  /**
+   * Obtener lista de aprobadores activos
+   * @returns {Promise} Lista de usuarios aprobadores
+   */
+  async getAprobadores() {
+    return this.get('/aprobacion/aprobadores/listar');
+  }
+
+  /**
+   * Validar PIN de aprobador
+   * @param {string} token - Token de aprobación
+   * @param {string} pin - PIN del aprobador
+   * @returns {Promise} Datos del aprobador si es válido
+   */
+  async validarPinAprobacion(token, pin) {
+    return this.post('/aprobacion/validar-pin', { token, pin });
   }
 }
 

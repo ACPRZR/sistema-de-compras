@@ -55,6 +55,12 @@ const ItemsOrdenDB = ({
         return;
       }
 
+      // TODO: Implementar endpoint /api/productos/categoria/:id en el backend
+      // Por ahora, dejamos los templates vacíos para evitar error 404
+      console.log('ℹ️ Templates deshabilitados - Endpoint no implementado');
+      setTemplates([]);
+      
+      /* CÓDIGO ORIGINAL - Comentado hasta que se implemente el endpoint
       setLoading(true);
       try {
         // Obtener categorías primero para encontrar el ID
@@ -72,6 +78,7 @@ const ItemsOrdenDB = ({
       } finally {
         setLoading(false);
       }
+      */
     };
 
     loadTemplates();

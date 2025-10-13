@@ -27,14 +27,19 @@ const AprobarOrden = () => {
   const [procesado, setProcesado] = useState(false);
   const [resultado, setResultado] = useState(null);
   
+  // Modal PIN
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pin, setPin] = useState('');
+  const [validandoPin, setValidandoPin] = useState(false);
+  
   // Formulario
-  const [nombre, setNombre] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [motivo, setMotivo] = useState('');
   const [accion, setAccion] = useState(null); // 'aprobar' o 'rechazar'
 
   useEffect(() => {
     cargarOrden();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const cargarOrden = async () => {
@@ -60,43 +65,81 @@ const AprobarOrden = () => {
     }
   };
 
-  const handleSubmit = async (tipoAccion) => {
-    if (!nombre.trim()) {
-      alert('Por favor ingresa tu nombre');
-      return;
-    }
-
+  const handleClickAccion = (tipoAccion) => {
     if (tipoAccion === 'rechazar' && !motivo.trim()) {
       alert('Por favor indica el motivo del rechazo');
       return;
     }
+    
+    setAccion(tipoAccion);
+    setShowPinModal(true);
+    setPin('');
+  };
 
+  const handleValidarPin = async () => {
+    if (!pin || pin.length !== 4) {
+      alert('Por favor ingresa tu PIN de 4 dígitos');
+      return;
+    }
+
+    setValidandoPin(true);
+    try {
+      const response = await apiService.validarPinAprobacion(token, pin);
+      
+      if (response.success) {
+        setShowPinModal(false);
+        await procesarAccion(response.data.aprobador);
+      } else {
+        alert('PIN incorrecto. Por favor intenta de nuevo.');
+        setPin('');
+      }
+    } catch (err) {
+      alert('Error al validar PIN: ' + err.message);
+      setPin('');
+    } finally {
+      setValidandoPin(false);
+    }
+  };
+
+  const procesarAccion = async (aprobador) => {
+    console.log('🚀 Procesando', accion);
+    console.log('🔗 Token:', token);
+    console.log('👤 Aprobador:', aprobador.nombre_completo);
+    
     setProcesando(true);
     try {
       const data = {
-        nombre: nombre.trim(),
-        ...(tipoAccion === 'aprobar' 
+        nombre: aprobador.nombre_completo,
+        ...(accion === 'aprobar' 
           ? { observaciones: observaciones.trim() }
           : { motivo: motivo.trim() }
         )
       };
 
-      const response = tipoAccion === 'aprobar'
+      console.log('📦 Datos a enviar:', data);
+
+      const response = accion === 'aprobar'
         ? await apiService.aprobarOrden(token, data)
         : await apiService.rechazarOrden(token, data);
+
+      console.log('📥 Respuesta recibida:', response);
 
       if (response.success) {
         setProcesado(true);
         setResultado({
-          tipo: tipoAccion,
+          tipo: accion,
+          aprobador: aprobador,
           ...response.data
         });
       } else {
+        console.error('❌ Error en respuesta:', response);
         alert(response.message || 'Error al procesar la orden');
+        setProcesando(false);
       }
     } catch (err) {
+      console.error('❌ Error capturado:', err);
+      console.error('❌ Stack:', err.stack);
       alert('Error al procesar la orden: ' + err.message);
-    } finally {
       setProcesando(false);
     }
   };
@@ -339,20 +382,6 @@ const AprobarOrden = () => {
             </h3>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tu Nombre <span className="text-danger-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Ej: María López"
-                  required
-                />
-              </div>
-
               {accion === 'aprobar' ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -384,7 +413,7 @@ const AprobarOrden = () => {
 
               <div className="flex space-x-3">
                 <button
-                  onClick={() => handleSubmit(accion)}
+                  onClick={() => handleClickAccion(accion)}
                   disabled={procesando}
                   className={`flex-1 px-6 py-3 rounded-lg font-semibold text-white transition-colors ${
                     accion === 'aprobar'
@@ -398,6 +427,65 @@ const AprobarOrden = () => {
                 <button
                   onClick={() => setAccion(null)}
                   disabled={procesando}
+                  className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal PIN */}
+        {showPinModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                🔒 Autenticación Requerida
+              </h3>
+              
+              <p className="text-sm text-gray-600 mb-4">
+                Para {accion === 'aprobar' ? 'aprobar' : 'rechazar'} esta orden, ingresa tu PIN de seguridad de 4 dígitos.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  PIN de Aprobación <span className="text-danger-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  onKeyPress={(e) => e.key === 'Enter' && handleValidarPin()}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-center text-2xl tracking-widest font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="••••"
+                  maxLength={4}
+                  autoFocus
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Este PIN fue asignado por el administrador del sistema
+                </p>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleValidarPin}
+                  disabled={validandoPin || pin.length !== 4}
+                  className={`flex-1 px-6 py-3 rounded-lg font-semibold text-white transition-colors ${
+                    validandoPin || pin.length !== 4
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-primary-600 hover:bg-primary-700'
+                  }`}
+                >
+                  {validandoPin ? 'Validando...' : 'Confirmar'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPin('');
+                  }}
+                  disabled={validandoPin}
                   className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors"
                 >
                   Cancelar

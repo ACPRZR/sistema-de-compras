@@ -30,9 +30,15 @@ const validarOrden = [
   body('lugar_entrega').notEmpty().withMessage('Lugar de entrega es requerido'),
   body('datos_proyecto').notEmpty().withMessage('Datos del proyecto son requeridos'),
   body('proveedor_nombre').notEmpty().withMessage('Nombre del proveedor es requerido'),
-  body('proveedor_ruc').isLength({ min: 11, max: 11 }).withMessage('RUC debe tener 11 dígitos'),
+  body('proveedor_ruc').optional({ nullable: true }).custom((value) => {
+    if (value && value.length !== 11) {
+      throw new Error('RUC debe tener 11 dígitos');
+    }
+    return true;
+  }),
   body('condiciones_pago_id').isInt({ min: 1 }).withMessage('Condiciones de pago son requeridas'),
   body('comprador_responsable_id').isInt({ min: 1 }).withMessage('Comprador responsable es requerido'),
+  body('aprobador_id').isInt({ min: 1 }).withMessage('Debe seleccionar un aprobador para la orden'),
   body('total').isFloat({ min: 0 }).withMessage('Total debe ser mayor o igual a 0')
 ];
 
@@ -161,11 +167,15 @@ router.get('/:id', async (req, res) => {
 // POST /api/ordenes - Crear nueva orden
 router.post('/', validarOrden, handleValidationErrors, async (req, res) => {
   try {
+    console.log('📥 Datos recibidos en POST /api/ordenes:', req.body);
+    console.log('🔍 aprobador_id recibido:', req.body.aprobador_id);
+    
     const ordenData = {
       ...req.body,
       created_by: req.user?.id || 1 // TODO: Obtener del token JWT
     };
 
+    console.log('📤 Datos que se enviarán a OrdenCompra.create:', ordenData);
     const orden = await OrdenCompra.create(ordenData);
     
     res.status(201).json({
@@ -417,22 +427,32 @@ router.delete('/:id/items/:itemId', async (req, res) => {
 
 // PUT /api/ordenes/:id/completar - Marcar orden como completada
 router.put('/:id/completar', async (req, res) => {
+  const pool = require('../config/database').pool;
+  
   try {
     const { id } = req.params;
     const { completada_por } = req.body;
     const ip = req.ip || req.connection.remoteAddress;
 
     // Verificar que la orden existe y está en estado "Aprobada"
-    const orden = await OrdenCompra.findById(id);
+    const ordenResult = await pool.query(
+      `SELECT oc.*, e.nombre as estado_nombre 
+       FROM ordenes_compra.ordenes_compra oc
+       LEFT JOIN ordenes_compra.estados_orden e ON oc.estado_id = e.id
+       WHERE oc.id = $1`,
+      [id]
+    );
     
-    if (!orden) {
+    if (ordenResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Orden no encontrada'
       });
     }
 
-    if (orden.estado_id !== 2) { // 2 = Aprobada
+    const orden = ordenResult.rows[0];
+
+    if (orden.estado_id !== 3) { // 3 = Aprobada
       return res.status(400).json({
         success: false,
         message: 'Solo se pueden completar órdenes aprobadas',
@@ -440,11 +460,10 @@ router.put('/:id/completar', async (req, res) => {
       });
     }
 
-    // Actualizar a estado "Completada" (ID: 4)
-    const pool = require('../config/database').pool;
+    // Actualizar a estado "Completada" (ID: 5)
     await pool.query(
-      `UPDATE ordenes_compra 
-       SET estado_id = 4,
+      `UPDATE ordenes_compra.ordenes_compra 
+       SET estado_id = 5,
            completada_por = $1,
            completada_fecha = CURRENT_TIMESTAMP,
            completada_ip = $2
@@ -453,12 +472,18 @@ router.put('/:id/completar', async (req, res) => {
     );
 
     // Obtener orden actualizada
-    const ordenActualizada = await OrdenCompra.findById(id);
+    const ordenActualizadaResult = await pool.query(
+      `SELECT oc.*, e.nombre as estado_nombre 
+       FROM ordenes_compra.ordenes_compra oc
+       LEFT JOIN ordenes_compra.estados_orden e ON oc.estado_id = e.id
+       WHERE oc.id = $1`,
+      [id]
+    );
 
     res.json({
       success: true,
       message: 'Orden marcada como completada',
-      data: ordenActualizada
+      data: ordenActualizadaResult.rows[0]
     });
   } catch (error) {
     console.error('Error completando orden:', error);

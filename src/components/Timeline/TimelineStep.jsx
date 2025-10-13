@@ -16,26 +16,42 @@ const TimelineStep = ({
       creada: {
         icon: CheckCircleIcon,
         label: 'Creada',
+        color: 'blue',
+        bgColor: 'bg-blue-500',
+        textColor: 'text-blue-600',
+        borderColor: 'border-blue-500'
+      },
+      revision: {
+        icon: CheckCircleIcon,
+        label: 'En Revisión',
+        color: 'warning',
+        bgColor: 'bg-warning-500',
+        textColor: 'text-warning-600',
+        borderColor: 'border-warning-500'
+      },
+      aprobada: {
+        icon: CheckCircleIcon,
+        label: 'Aprobada',
         color: 'success',
         bgColor: 'bg-success-500',
         textColor: 'text-success-600',
         borderColor: 'border-success-500'
       },
-      lista: {
-        icon: CheckCircleIcon,
-        label: 'Lista',
-        color: 'primary',
-        bgColor: 'bg-primary-500',
-        textColor: 'text-primary-600',
-        borderColor: 'border-primary-500'
-      },
       completada: {
         icon: CheckCircleIcon,
         label: 'Completada',
-        color: 'accent',
-        bgColor: 'bg-accent-500',
-        textColor: 'text-accent-600',
-        borderColor: 'border-accent-500'
+        color: 'green',
+        bgColor: 'bg-green-600',
+        textColor: 'text-green-700',
+        borderColor: 'border-green-600'
+      },
+      cancelada: {
+        icon: CheckCircleIcon,
+        label: 'Cancelada',
+        color: 'danger',
+        bgColor: 'bg-danger-500',
+        textColor: 'text-danger-600',
+        borderColor: 'border-danger-500'
       }
     };
     return configs[estado] || configs.creada;
@@ -86,7 +102,7 @@ const TimelineStep = ({
       {/* Información del paso */}
       <div className="mt-3 text-center min-w-[120px]">
         <p className={`text-sm ${textClasses}`}>
-          {config.label}
+          {data?.label || config.label}
         </p>
         
         {data?.fecha && (

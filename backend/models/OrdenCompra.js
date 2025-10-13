@@ -23,17 +23,18 @@ class OrdenCompra {
       proveedor_email,
       condiciones_pago_id,
       comprador_responsable_id,
+      aprobador_id,
       total,
       created_by
     } = ordenData;
 
     const text = `
-      INSERT INTO ordenes_compra (
+      INSERT INTO ordenes_compra.ordenes_compra (
         numero_oc, fecha_requerimiento, categoria_id, tipo_oc_id, estado_id, prioridad_id,
         unidad_negocio_id, unidad_autoriza_id, ubicacion_entrega_id, lugar_entrega, datos_proyecto,
         proveedor_id, proveedor_nombre, proveedor_ruc, proveedor_contacto, proveedor_telefono, proveedor_email,
-        condiciones_pago_id, comprador_responsable_id, total, created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        condiciones_pago_id, comprador_responsable_id, aprobador_id, total, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING *
     `;
 
@@ -41,7 +42,7 @@ class OrdenCompra {
       numero_oc, fecha_requerimiento, categoria_id, tipo_oc_id, estado_id, prioridad_id,
       unidad_negocio_id, unidad_autoriza_id, ubicacion_entrega_id, lugar_entrega, datos_proyecto,
       proveedor_id, proveedor_nombre, proveedor_ruc, proveedor_contacto, proveedor_telefono, proveedor_email,
-      condiciones_pago_id, comprador_responsable_id, total, created_by
+      condiciones_pago_id, comprador_responsable_id, aprobador_id, total, created_by
     ];
 
     const result = await query(text, values);
@@ -66,17 +67,17 @@ class OrdenCompra {
         prov.nombre as proveedor_nombre_completo,
         cp.nombre as condiciones_pago_nombre,
         u.nombre_completo as comprador_nombre
-      FROM ordenes_compra oc
-      LEFT JOIN categorias_compra c ON oc.categoria_id = c.id
-      LEFT JOIN tipos_orden to ON oc.tipo_oc_id = to.id
-      LEFT JOIN estados_orden e ON oc.estado_id = e.id
-      LEFT JOIN prioridades p ON oc.prioridad_id = p.id
-      LEFT JOIN unidades_negocio un ON oc.unidad_negocio_id = un.id
-      LEFT JOIN unidades_negocio ua ON oc.unidad_autoriza_id = ua.id
-      LEFT JOIN ubicaciones_entrega ue ON oc.ubicacion_entrega_id = ue.id
-      LEFT JOIN proveedores prov ON oc.proveedor_id = prov.id
-      LEFT JOIN condiciones_pago cp ON oc.condiciones_pago_id = cp.id
-      LEFT JOIN usuarios u ON oc.comprador_responsable_id = u.id
+      FROM ordenes_compra.ordenes_compra oc
+      LEFT JOIN ordenes_compra.categorias_compra c ON oc.categoria_id = c.id
+      LEFT JOIN ordenes_compra.tipos_orden to ON oc.tipo_oc_id = to.id
+      LEFT JOIN ordenes_compra.estados_orden e ON oc.estado_id = e.id
+      LEFT JOIN ordenes_compra.prioridades p ON oc.prioridad_id = p.id
+      LEFT JOIN ordenes_compra.unidades_negocio un ON oc.unidad_negocio_id = un.id
+      LEFT JOIN ordenes_compra.unidades_negocio ua ON oc.unidad_autoriza_id = ua.id
+      LEFT JOIN ordenes_compra.ubicaciones_entrega ue ON oc.ubicacion_entrega_id = ue.id
+      LEFT JOIN ordenes_compra.proveedores prov ON oc.proveedor_id = prov.id
+      LEFT JOIN ordenes_compra.condiciones_pago cp ON oc.condiciones_pago_id = cp.id
+      LEFT JOIN ordenes_compra.usuarios u ON oc.comprador_responsable_id = u.id
       WHERE oc.id = $1
     `;
 
@@ -97,13 +98,13 @@ class OrdenCompra {
         un.nombre as unidad_negocio_nombre,
         prov.nombre as proveedor_nombre_completo,
         u.nombre_completo as comprador_nombre
-      FROM ordenes_compra oc
-      LEFT JOIN categorias_compra c ON oc.categoria_id = c.id
-      LEFT JOIN estados_orden e ON oc.estado_id = e.id
-      LEFT JOIN prioridades p ON oc.prioridad_id = p.id
-      LEFT JOIN unidades_negocio un ON oc.unidad_negocio_id = un.id
-      LEFT JOIN proveedores prov ON oc.proveedor_id = prov.id
-      LEFT JOIN usuarios u ON oc.comprador_responsable_id = u.id
+      FROM ordenes_compra.ordenes_compra oc
+      LEFT JOIN ordenes_compra.categorias_compra c ON oc.categoria_id = c.id
+      LEFT JOIN ordenes_compra.estados_orden e ON oc.estado_id = e.id
+      LEFT JOIN ordenes_compra.prioridades p ON oc.prioridad_id = p.id
+      LEFT JOIN ordenes_compra.unidades_negocio un ON oc.unidad_negocio_id = un.id
+      LEFT JOIN ordenes_compra.proveedores prov ON oc.proveedor_id = prov.id
+      LEFT JOIN ordenes_compra.usuarios u ON oc.comprador_responsable_id = u.id
       WHERE 1=1
     `;
 
@@ -208,7 +209,7 @@ class OrdenCompra {
 
     values.push(id);
     const text = `
-      UPDATE ordenes_compra 
+      UPDATE ordenes_compra.ordenes_compra 
       SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${paramCount}
       RETURNING *
@@ -220,7 +221,7 @@ class OrdenCompra {
 
   // Eliminar orden
   static async delete(id) {
-    const text = 'DELETE FROM ordenes_compra WHERE id = $1 RETURNING *';
+    const text = 'DELETE FROM ordenes_compra.ordenes_compra WHERE id = $1 RETURNING *';
     const result = await query(text, [id]);
     return result.rows[0];
   }
@@ -230,16 +231,15 @@ class OrdenCompra {
     const text = `
       SELECT 
         COUNT(*) as total_ordenes,
-        COUNT(CASE WHEN e.codigo = 'creada' THEN 1 END) as ordenes_creadas,
-        COUNT(CASE WHEN e.codigo = 'revision' THEN 1 END) as ordenes_revision,
-        COUNT(CASE WHEN e.codigo = 'aprobada' THEN 1 END) as ordenes_aprobadas,
-        COUNT(CASE WHEN e.codigo = 'enviada' THEN 1 END) as ordenes_enviadas,
-        COUNT(CASE WHEN e.codigo = 'completada' THEN 1 END) as ordenes_completadas,
-        COUNT(CASE WHEN e.codigo = 'cancelada' THEN 1 END) as ordenes_canceladas,
+        COUNT(CASE WHEN oc.estado_id = 1 THEN 1 END) as ordenes_creadas,
+        COUNT(CASE WHEN oc.estado_id = 2 THEN 1 END) as ordenes_revision,
+        COUNT(CASE WHEN oc.estado_id = 3 THEN 1 END) as ordenes_aprobadas,
+        COUNT(CASE WHEN oc.estado_id = 4 THEN 1 END) as ordenes_enviadas,
+        COUNT(CASE WHEN oc.estado_id = 5 THEN 1 END) as ordenes_completadas,
+        COUNT(CASE WHEN oc.estado_id = 6 THEN 1 END) as ordenes_canceladas,
         COALESCE(SUM(oc.total), 0) as monto_total,
         COALESCE(AVG(oc.total), 0) as monto_promedio
-      FROM ordenes_compra oc
-      LEFT JOIN estados_orden e ON oc.estado_id = e.id
+      FROM ordenes_compra.ordenes_compra oc
     `;
 
     const result = await query(text);
@@ -255,7 +255,7 @@ class OrdenCompra {
     // Buscar el último número del mes
     const text = `
       SELECT MAX(CAST(SUBSTRING(numero_oc FROM 'OC-\\d{4}-\\d{2}-(\\d{3})$') AS INTEGER)) as last_number
-      FROM ordenes_compra 
+      FROM ordenes_compra.ordenes_compra 
       WHERE numero_oc LIKE $1
     `;
     

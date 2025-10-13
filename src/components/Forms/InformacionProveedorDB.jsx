@@ -100,7 +100,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
     if (proveedorData === 'varios') {
       // Configurar para varios proveedores
       onFormChange('proveedor', 'Varios');
-      onFormChange('rucProveedor', 'Sin RUC');
+      onFormChange('rucProveedor', '');
       onFormChange('contactoProveedor', '');
       onFormChange('telefonoProveedor', '');
       onFormChange('emailProveedor', '');
@@ -226,26 +226,41 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
         activo: true
       };
       
+      console.log('📤 Creando proveedor:', proveedorData);
       const result = await apiService.createProveedor(proveedorData);
       
       if (result.success) {
+        console.log('✅ Proveedor creado:', result.data);
+        
         // Recargar proveedores
         const updatedResult = await apiService.getProveedores();
         const todosProveedores = updatedResult.data || [];
+        
+        console.log('📋 Total proveedores en BD:', todosProveedores.length);
+        console.log('📋 Categoria orden actual (código):', categoriaCompra);
+        
         const categoriaId = mapeoCategoriaId[categoriaCompra];
-        const proveedoresFiltrados = todosProveedores.filter(p => p.categoria_id === categoriaId);
+        console.log('📋 Categoria orden actual (ID numérico):', categoriaId);
+        console.log('📋 Categoria del nuevo proveedor (ID):', result.data.categoria_id);
+        
+        const proveedoresFiltrados = todosProveedores.filter(p => {
+          console.log(`   🔍 Proveedor "${p.nombre}" - categoria_id: ${p.categoria_id} === ${categoriaId}?`, p.categoria_id === categoriaId);
+          return p.categoria_id === categoriaId;
+        });
+        console.log('📋 Proveedores filtrados:', proveedoresFiltrados.length);
+        
         setProveedores(proveedoresFiltrados);
         
-        // Seleccionar el nuevo proveedor automáticamente
-        const nuevoProveedor = result.data;
-        onFormChange('proveedor', nuevoProveedor.nombre);
-        onFormChange('rucProveedor', nuevoProveedor.ruc || '');
-        onFormChange('contactoProveedor', nuevoProveedor.contacto || '');
-        onFormChange('telefonoProveedor', nuevoProveedor.telefono || '');
-        onFormChange('emailProveedor', nuevoProveedor.email || '');
+        // Seleccionar el nuevo proveedor automáticamente (renombrar variable para evitar colisión)
+        const proveedorCreado = result.data;
+        onFormChange('proveedor', proveedorCreado.nombre);
+        onFormChange('rucProveedor', proveedorCreado.ruc || '');
+        onFormChange('contactoProveedor', proveedorCreado.contacto || '');
+        onFormChange('telefonoProveedor', proveedorCreado.telefono || '');
+        onFormChange('emailProveedor', proveedorCreado.email || '');
         
         // Mostrar contacto si hay datos
-        if (nuevoProveedor.contacto || nuevoProveedor.telefono || nuevoProveedor.email) {
+        if (proveedorCreado.contacto || proveedorCreado.telefono || proveedorCreado.email) {
           setShowContacto(true);
         }
         
@@ -254,7 +269,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
         setErrors({ general: result.error || 'Error al crear proveedor' });
       }
     } catch (error) {
-      console.error('Error agregando proveedor:', error);
+      console.error('❌ Error agregando proveedor:', error);
       setErrors({ general: 'Error al crear proveedor' });
     } finally {
       setLoading(false);
@@ -413,6 +428,13 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
                     </div>
                   )}
 
+                  {/* Mensaje informativo sobre la categoría */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-800">
+                      <strong>ℹ️ Nota:</strong> Este proveedor se creará para la categoría <strong>{categorias.find(c => c.id === parseInt(nuevoProveedor.categoria_id))?.nombre || categoriaCompra}</strong> de la orden actual.
+                    </p>
+                  </div>
+
                   <Input
                     label="Nombre del Proveedor *"
                     value={nuevoProveedor.nombre}
@@ -436,6 +458,7 @@ const InformacionProveedorDB = ({ formData, onFormChange, categoriaCompra }) => 
                     error={errors.categoria_id}
                     leftIcon={TagIcon}
                     required
+                    disabled={!!categoriaCompra}
                   />
 
                   <Input

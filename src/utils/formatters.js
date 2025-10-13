@@ -33,22 +33,34 @@ export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
 
 /**
  * Generar número de orden de compra
+ * NOTA: Este método usa localStorage como respaldo temporal.
+ * En producción, debería obtenerse de la base de datos.
  * @returns {string} - Número de OC generado
  */
 export const generateOCNumber = () => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
   
-  // Obtener último número del mes desde localStorage
-  const key = `oc_${year}_${month}`;
+  // SIMPLIFICADO: Formato OC-{año}-{contador}
+  // Obtener último número del año desde localStorage
+  const key = `oc_${year}`;
   const lastNumber = parseInt(localStorage.getItem(key) || '0');
   const newNumber = lastNumber + 1;
   
   // Guardar nuevo número
   localStorage.setItem(key, newNumber.toString());
   
-  return `OC-${year}-${month}-${String(newNumber).padStart(3, '0')}`;
+  return `OC-${year}-${String(newNumber).padStart(3, '0')}`;
+};
+
+/**
+ * Resetear contador de OC (útil para desarrollo/testing)
+ * @param {number} year - Año a resetear (opcional, usa año actual por defecto)
+ */
+export const resetOCCounter = (year = new Date().getFullYear()) => {
+  const key = `oc_${year}`;
+  localStorage.removeItem(key);
+  console.log(`✅ Contador de OC ${year} reseteado`);
 };
 
 /**

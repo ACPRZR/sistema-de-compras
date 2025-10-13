@@ -32,13 +32,11 @@ const Select = forwardRef(({
             className
           )}
           onChange={(e) => {
+            console.log('🎯 Select onChange ejecutándose:', e);
             if (onChange) {
-              if (e && e.target && e.target.value !== undefined) {
-                onChange(e.target.value);
-              } else if (typeof e === 'string') {
-                // Si el evento es directamente un string (valor)
-                onChange(e);
-              }
+              const value = e.target.value;
+              console.log('🎯 Llamando onChange con valor:', value);
+              onChange(value);
             }
           }}
           {...props}

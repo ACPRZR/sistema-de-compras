@@ -36,7 +36,7 @@ class TokenService {
     const expirationDate = this.getExpirationDate(expirationHours);
 
     await pool.query(
-      `UPDATE ordenes_compra 
+      `UPDATE ordenes_compra.ordenes_compra 
        SET token_aprobacion = $1,
            token_creado_fecha = CURRENT_TIMESTAMP,
            token_expira_fecha = $2,
@@ -65,10 +65,10 @@ class TokenService {
         e.codigo as estado_codigo,
         c.nombre as categoria_nombre,
         p.nombre as proveedor_nombre
-       FROM ordenes_compra oc
-       LEFT JOIN estados_orden e ON oc.estado_id = e.id
-       LEFT JOIN categorias_compra c ON oc.categoria_id = c.id
-       LEFT JOIN proveedores p ON oc.proveedor_id = p.id
+       FROM ordenes_compra.ordenes_compra oc
+       LEFT JOIN ordenes_compra.estados_orden e ON oc.estado_id = e.id
+       LEFT JOIN ordenes_compra.categorias_compra c ON oc.categoria_id = c.id
+       LEFT JOIN ordenes_compra.proveedores p ON oc.proveedor_id = p.id
        WHERE oc.token_aprobacion = $1`,
       [token]
     );
@@ -89,8 +89,9 @@ class TokenService {
       return { ...orden, error: 'TOKEN_EXPIRADO', message: 'Este link ha expirado' };
     }
 
-    // Validar si la orden ya fue procesada
-    if (orden.estado_id !== 1) { // 1 = Creada
+    // Validar si la orden ya fue procesada (aprobada, rechazada o completada)
+    // Permitir estados: 1 (Creada) y 2 (En Revisión)
+    if (orden.estado_id !== 1 && orden.estado_id !== 2) {
       return { ...orden, error: 'ORDEN_PROCESADA', message: 'Esta orden ya fue procesada' };
     }
 
@@ -103,7 +104,7 @@ class TokenService {
    */
   static async markTokenAsUsed(token) {
     await pool.query(
-      `UPDATE ordenes_compra 
+      `UPDATE ordenes_compra.ordenes_compra 
        SET token_usado = TRUE 
        WHERE token_aprobacion = $1`,
       [token]
@@ -116,7 +117,7 @@ class TokenService {
    */
   static async invalidateToken(ordenId) {
     await pool.query(
-      `UPDATE ordenes_compra 
+      `UPDATE ordenes_compra.ordenes_compra 
        SET token_aprobacion = NULL,
            token_usado = TRUE 
        WHERE id = $1`,
@@ -161,7 +162,7 @@ ${urls.aprobar}
 ❌ *Rechazar:*
 ${urls.rechazar}
 
-_Este link expira en 48 horas_`;
+⏰ _Este link expira en 12 horas_`;
   }
 }
 

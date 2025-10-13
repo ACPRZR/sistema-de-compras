@@ -38,10 +38,11 @@ class OrdenItem {
         oi.*,
         um.nombre as unidad_nombre,
         um.simbolo as unidad_simbolo,
+        um.nombre as unidad_medida,
         ps.codigo as producto_codigo
-      FROM orden_items oi
-      LEFT JOIN unidades_medida um ON oi.unidad_id = um.id
-      LEFT JOIN productos_servicios ps ON oi.producto_id = ps.id
+      FROM ordenes_compra.orden_items oi
+      LEFT JOIN ordenes_compra.unidades_medida um ON oi.unidad_id = um.id
+      LEFT JOIN ordenes_compra.productos_servicios ps ON oi.producto_id = ps.id
       WHERE oi.orden_id = $1
       ORDER BY oi.item_numero
     `;

@@ -15,14 +15,17 @@ async function insertDefaultData() {
 
     // Insertar estados de orden
     await pool.query(`
-      INSERT INTO ordenes_compra.estados_orden (id, nombre, descripcion) 
+      INSERT INTO ordenes_compra.estados_orden (id, codigo, nombre, descripcion) 
       VALUES 
-        (1, 'Creada', 'Orden creada y pendiente de aprobación'),
-        (2, 'Aprobada', 'Orden aprobada y lista para procesar'),
-        (3, 'En Proceso', 'Orden en proceso de compra'),
-        (4, 'Completada', 'Orden completada'),
-        (5, 'Cancelada', 'Orden cancelada')
-      ON CONFLICT (id) DO NOTHING;
+        (1, 'creada', 'Creada', 'Orden creada, aún no enviada para aprobación'),
+        (2, 'aprobada', 'Aprobada', 'Orden aprobada por el autorizador'),
+        (3, 'revision', 'En Revisión', 'Orden enviada para aprobación vía WhatsApp'),
+        (4, 'completada', 'Completada', 'Orden completada, compra finalizada'),
+        (5, 'cancelada', 'Cancelada', 'Orden rechazada por el autorizador')
+      ON CONFLICT (id) DO UPDATE SET 
+        codigo = EXCLUDED.codigo,
+        nombre = EXCLUDED.nombre,
+        descripcion = EXCLUDED.descripcion;
     `);
 
     // Insertar tipos de orden
