@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  @media print {
+    @page {
+      margin: 1cm;
+    }
+
+    /* Hide Layout Elements */
+    aside,
+    nav,
+    header {
+      display: none !important;
+    }
+
+    /* Reset Main Container */
+    main {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
+    }
+
+    /* Ensure Backgrounds Print */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Remove Shadows */
+    .shadow-sm,
+    .shadow-md,
+    .shadow-lg,
+    .shadow-xl {
+      box-shadow: none !important;
+    }
+  }
+}
+
+@layer base {
+  body {
+    @apply antialiased text-gray-900 bg-gray-50;
+  }
+}
