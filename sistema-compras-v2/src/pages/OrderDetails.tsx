@@ -1,8 +1,10 @@
-
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Printer, Paperclip, Download, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { supabase } from '../services/supabase';
-import { ArrowLeft, Printer, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import type { Order } from '../types/orders';
 
 export default function OrderDetails() {
     const { id } = useParams<{ id: string }>();
@@ -14,11 +16,12 @@ export default function OrderDetails() {
             const { data, error } = await supabase
                 .from('orders')
                 .select(`
-          *,
-          items:order_items(*),
-          profile:user_id(full_name, email),
-          supplier:supplier_id(name, ruc)
-        `)
+    *,
+    items: order_items(*),
+        supplier: suppliers(*),
+            requestor: profiles(*),
+                attachments: order_attachments(*)
+                `)
                 .eq('id', id)
                 .single();
 
@@ -63,7 +66,7 @@ export default function OrderDetails() {
                         <Printer className="w-4 h-4" />
                         Imprimir / PDF
                     </button>
-                    <div className={`px-4 py-1.5 rounded-full border text-sm font-semibold flex items-center capitalize ${getStatusColor(order.status)}`}>
+                    <div className={`px - 4 py - 1.5 rounded - full border text - sm font - semibold flex items - center capitalize ${getStatusColor(order.status)} `}>
                         {order.status === 'approved' && <CheckCircle2 className="w-4 h-4 mr-2" />}
                         {order.status === 'rejected' && <XCircle className="w-4 h-4 mr-2" />}
                         {order.status === 'review' && <Clock className="w-4 h-4 mr-2" />}
@@ -169,6 +172,33 @@ export default function OrderDetails() {
                     {order.project_details || 'Sin detalles adicionales.'}
                 </p>
             </div>
+
+            {/* Attachments Section */}
+            {order.attachments && order.attachments.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 print:hidden">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                        <Paperclip className="w-5 h-5 mr-2 text-slate-500" />
+                        Archivos Adjuntos (Cotizaciones)
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {order.attachments.map((file: any) => (
+                            <a
+                                key={file.id}
+                                href={file.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-lg hover:shadow-md transition-all group"
+                            >
+                                <div className="flex-1 truncate mr-2">
+                                    <p className="text-sm font-medium text-slate-900 truncate">{file.file_name}</p>
+                                    <p className="text-xs text-slate-500">{format(new Date(file.created_at), 'dd/MM/yyyy HH:mm')}</p>
+                                </div>
+                                <Download className="w-5 h-5 text-slate-400 group-hover:text-blue-600" />
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Signatures Area (Print Only) */}
             <div className="hidden print:grid grid-cols-3 gap-8 mt-20 pt-10 border-t border-slate-200">

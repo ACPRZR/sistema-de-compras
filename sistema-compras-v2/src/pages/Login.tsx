@@ -6,6 +6,7 @@ import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const navigate = useNavigate();
@@ -16,19 +17,15 @@ export default function Login() {
         setMessage(null);
 
         try {
-            const { error } = await supabase.auth.signInWithOtp({
+            const { error } = await supabase.auth.signInWithPassword({
                 email,
-                options: {
-                    emailRedirectTo: window.location.origin,
-                },
+                password,
             });
 
             if (error) throw error;
 
-            setMessage({
-                type: 'success',
-                text: '¡Enlace de acceso enviado! Revisa tu correo electrónico.'
-            });
+            // Login successful, navigation is handled by AuthContext or we can force it here
+            navigate('/');
         } catch (error: any) {
             setMessage({
                 type: 'error',
@@ -49,8 +46,8 @@ export default function Login() {
 
                 {message && (
                     <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 ${message.type === 'success'
-                            ? 'bg-green-500/20 text-green-200 border border-green-500/30'
-                            : 'bg-red-500/20 text-red-200 border border-red-500/30'
+                        ? 'bg-green-500/20 text-green-200 border border-green-500/30'
+                        : 'bg-red-500/20 text-red-200 border border-red-500/30'
                         }`}>
                         {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 mt-0.5" /> : <AlertCircle className="w-5 h-5 mt-0.5" />}
                         <span className="text-sm font-medium">{message.text}</span>
@@ -73,6 +70,21 @@ export default function Login() {
                         />
                     </div>
 
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                            Contraseña
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                            placeholder="••••••••"
+                        />
+                    </div>
+
                     <button
                         type="submit"
                         disabled={loading}
@@ -81,10 +93,10 @@ export default function Login() {
                         {loading ? (
                             <>
                                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                Enviando enlace...
+                                Iniciando sesión...
                             </>
                         ) : (
-                            'Ingresar con Magic Link'
+                            'Ingresar'
                         )}
                     </button>
                 </form>

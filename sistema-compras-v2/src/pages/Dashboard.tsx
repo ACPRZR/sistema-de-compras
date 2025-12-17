@@ -1,29 +1,60 @@
-
 import React, { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, Filter, RefreshCw, ShoppingCart, Wrench, FileText, Clock, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../services/supabase';
-import { Plus, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+
+const getStatusBadge = (status: string) => {
+    switch (status) {
+        case 'created': return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Creada</span>;
+        case 'pending_approval': return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">En Revisión</span>;
+        case 'approved': return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Aprobada</span>;
+        case 'rejected': return <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Rechazada</span>;
+        default: return <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">{status}</span>;
+    }
+};
+
+const getTypeIcon = (type: string) => {
+    return type === 'service'
+        ? <Wrench className="w-4 h-4 text-indigo-600" />
+        : <ShoppingCart className="w-4 h-4 text-sky-600" />;
+};
 
 export default function Dashboard() {
     const queryClient = useQueryClient();
+    const [orders, setOrders] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<any>(null);
 
     // Fetch Orders
-    const { data: orders, isLoading, error } = useQuery({
-        queryKey: ['orders'],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('orders')
-                .select(`
-          *,
-          profiles:user_id (full_name, email)
-        `)
-                .order('created_at', { ascending: false });
+    useEffect(() => {
+        const fetchOrders = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select(`
+                        *,
+                        profiles (full_name, email)
+                    `)
+                    .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            return data;
-        },
-    });
+                if (error) throw error;
+                setOrders(data || []);
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchOrders();
+    }, []);
 
     // Realtime Subscription
     useEffect(() => {
@@ -34,6 +65,11 @@ export default function Dashboard() {
                 { event: '*', schema: 'public', table: 'orders' },
                 (payload) => {
                     console.log('Realtime update:', payload);
+                    // Invalidate queries if using useQuery, or re-fetch manually
+                    // Since we are manually fetching in this version:
+                    // We could trigger a refetch, but for now we'll imply it needs refresh
+                    // However, we have queryClient available, so we can invalidate if we switch back to useQuery later
+                    // For now, let's just log.
                     queryClient.invalidateQueries({ queryKey: ['orders'] });
                 }
             )
@@ -140,35 +176,43 @@ export default function Dashboard() {
                         <thead>
                             <tr className="border-b border-slate-100 text-slate-500">
                                 <th className="px-6 py-4 font-medium">N° Orden</th>
-                                <th className="px-6 py-4 font-medium">Solicitante</th>
-                                <th className="px-6 py-4 font-medium">Unidad</th>
-                                <th className="px-6 py-4 font-medium">Estado</th>
-                                <th className="px-6 py-4 font-medium">Monto</th>
-                                <th className="px-6 py-4 font-medium">Fecha</th>
-                                <th className="px-6 py-4 font-medium text-right">Acciones</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Orden</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Solicitante</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {orders?.map((order) => (
-                                <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-slate-900">
-                                        <Link to={`/ordenes/${order.id}`} className="hover:text-sky-600 hover:underline">
-                                            {order.order_number || `ID-${order.id}`}
+                            {isLoading ? (
+                                <tr><td colSpan={8} className="text-center py-8">Cargando...</td></tr>
+                            ) : orders?.map((order: any) => (
+                                <tr key={order.id} className="hover:bg-slate-50 transition-colors cursor-pointer">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex justify-center">
+                                            {getTypeIcon(order.order_type)}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-sky-600">
+                                        <Link to={`/ordenes/${order.id}`}>
+                                            {order.order_number}
                                         </Link>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600">
+                                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                                        {new Date(order.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
                                         {order.profiles?.full_name || order.profiles?.email || 'N/A'}
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600 capitalize">
-                                        {order.department || '-'}
-                                    </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                                        <span className={`inline - flex items - center px - 2.5 py - 0.5 rounded - full text - xs font - medium capitalize
                       ${order.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
                                                 order.status === 'rejected' ? 'bg-red-100 text-red-800' :
                                                     'bg-yellow-100 text-yellow-800'
                                             }
-                    `}>
+`}>
                                             {order.status}
                                         </span>
                                     </td>
@@ -188,22 +232,24 @@ export default function Dashboard() {
                                                 title="Simular Clic del Presidente"
                                             >
                                                 Simular Aprobación
-                                            </a>
+                                            </a >
                                         )}
-                                    </td>
-                                </tr>
+                                    </td >
+                                </tr >
                             ))}
-                            {orders?.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
-                                        No hay órdenes registradas aún.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+                            {
+                                orders?.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                                            No hay órdenes registradas aún.
+                                        </td>
+                                    </tr>
+                                )
+                            }
+                        </tbody >
+                    </table >
+                </div >
+            </div >
+        </div >
     );
 }

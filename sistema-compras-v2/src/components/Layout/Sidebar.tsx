@@ -1,16 +1,6 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-    LayoutDashboard,
-    ShoppingCart,
-    FileText,
-    Settings,
-    Settings,
-    Users,
-    LogOut,
-    Building2
-} from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, FileText, Settings, Users, LogOut, Building2, Package } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const Sidebar = () => {

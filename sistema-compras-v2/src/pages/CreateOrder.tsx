@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Trash2, Save, Loader2, UploadCloud, FileText, X } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { Input } from '../components/UI/Input';
 import { Select } from '../components/UI/Select';
@@ -11,9 +11,20 @@ import { type PurchaseOrderForm, type OrderItem } from '../types/orders';
 import { useQuery } from '@tanstack/react-query';
 
 export default function CreateOrder() {
+    const [searchParams] = useSearchParams();
+    const orderType = searchParams.get('type') === 'service' ? 'service' : 'purchase';
+
     const { register, handleSubmit } = useForm<PurchaseOrderForm>();
     const [items, setItems] = useState<OrderItem[]>([]);
+    const [files, setFiles] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // New Item State
+    const [newItemDescription, setNewItemDescription] = useState('');
+    const [newItemQuantity, setNewItemQuantity] = useState(1);
+    const [newItemUnitMeasure, setNewItemUnitMeasure] = useState('und');
+    const [newItemUnitPrice, setNewItemUnitPrice] = useState(0);
+
     const navigate = useNavigate();
 
     // Fetch Suppliers
@@ -25,44 +36,141 @@ export default function CreateOrder() {
         }
     });
 
+    // Fetch Units
+    const { data: unitsList } = useQuery({
+        queryKey: ['units'],
+        queryFn: async () => {
+            const { data } = await supabase.from('units_of_measure').select('code, name').eq('is_active', true).order('name');
+            return data || [];
+        }
+    });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+
     const onSubmit = async (data: PurchaseOrderForm) => {
         if (items.length === 0) {
             alert('Debe agregar al menos un item a la orden.');
             return;
         }
 
-        setLoading(true);
         try {
-            const { data: result, error } = await supabase.rpc('create_complete_order', {
-                p_order_data: {
-                    ...data,
-                    supplier_id: Number(data.supplier_id) // Ensure number
-                },
-                p_items_data: items
-            });
+            setLoading(true);
 
-            if (error) throw error;
-            if (result && !result.success) throw new Error(result.error);
+            // 1. Create Order via RPC
+            // 1. Create Order (Direct Insert to bypass outdated RPC)
+            const { data: orderData, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    user_id: (await supabase.auth.getUser()).data.user?.id,
+                    department: data.department, // Keep for legacy or enum mapping
+                    department_enum: data.department, // New Enum Field
+                    status: 'created',
+                    total_amount: calculateTotal(),
+                    // New BI Fields
+                    required_date: data.required_date,
+                    purchase_type: data.purchase_type,
+                    payment_condition: data.payment_conditions,
+                    delivery_location_id: data.delivery_location_id,
+                    delivery_location_id: data.delivery_location_id,
+                    project_details: data.project_details,
+                    priority: data.priority,
 
-            console.log('Order created:', result);
-            alert(`¡Orden ${result.order_number} creada exitosamente!`);
+                    // Auto-generate order number (simple random for now, trigger handles real one usually)
+                    order_number: `OC-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+                    supplier_id: data.supplier_id
+                })
+                .select()
+                .single();
+
+            if (orderError) throw orderError;
+            const orderId = orderData.id;
+
+            // 2. Insert Items
+            const itemsData = items.map(item => ({
+                order_id: orderId,
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                unit_measure: item.unit_measure,
+                // product_id: item.product_id // If we had product selection
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(itemsData);
+
+            if (itemsError) throw itemsError;
+
+
+
+            // 2. Upload Files if any
+            if (files.length > 0) {
+                for (const file of files) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${orderId}/${crypto.randomUUID()}.${fileExt}`;
+
+                    // Upload to Storage
+                    const { error: uploadError } = await supabase.storage
+                        .from('quotes')
+                        .upload(fileName, file);
+
+                    if (uploadError) {
+                        console.error('Error uploading file:', uploadError);
+                        continue;
+                    }
+
+                    // Get Public URL
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('quotes')
+                        .getPublicUrl(fileName);
+
+                    // Link to Order
+                    await supabase.from('order_attachments').insert({
+                        order_id: orderId,
+                        file_name: file.name,
+                        file_url: publicUrl,
+                        file_type: file.type
+                    });
+                }
+            }
+
+            alert('Orden creada exitosamente');
             navigate('/');
-        } catch (err: any) {
-            console.error('Error creating order:', err);
-            alert(`Error al crear la orden: ${err.message}`);
+        } catch (error: any) {
+            console.error(error);
+            alert('Error al crear la orden: ' + error.message);
         } finally {
             setLoading(false);
         }
     };
 
     const addItem = () => {
+        if (!newItemDescription) {
+            alert('Ingrese una descripción');
+            return;
+        }
+
         setItems([...items, {
-            description: '',
-            quantity: 1,
-            unit_price: 0,
-            unit_measure: 'und',
-            subtotal: 0
+            description: newItemDescription,
+            quantity: newItemQuantity,
+            unit_price: newItemUnitPrice,
+            unit_measure: newItemUnitMeasure,
+            subtotal: newItemQuantity * newItemUnitPrice
         }]);
+
+        // Reset
+        setNewItemDescription('');
+        setNewItemQuantity(1);
+        setNewItemUnitPrice(0);
     };
 
     const removeItem = (index: number) => {
@@ -115,19 +223,13 @@ export default function CreateOrder() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Select
                                 label="Unidad de Negocio"
-                                {...register('department')}
+                                {...register('department', { required: 'Requerido' })}
                                 options={[
                                     { value: 'logistica', label: 'Logística' },
-                                    { value: 'administracion', label: 'Administración' },
-                                    { value: 'misiones', label: 'Misiones' }
-                                ]}
-                            />
-                            <Select
-                                label="Unidad que Autoriza"
-                                {...register('authorizer_unit')}
-                                options={[
-                                    { value: 'presidencia', label: 'Presidencia' },
-                                    { value: 'tesoreria', label: 'Tesorería' }
+                                    { value: 'mantenimiento', label: 'Mantenimiento' },
+                                    { value: 'contabilidad', label: 'Contabilidad' },
+                                    { value: 'oficina_nacional', label: 'Oficina Nacional' },
+                                    { value: 'comunicaciones_sistemas', label: 'Comunicaciones y Sistemas' }
                                 ]}
                             />
                             <Select
@@ -138,18 +240,36 @@ export default function CreateOrder() {
                                     { value: 'urgent', label: 'Urgente' }
                                 ]}
                             />
-                            <Input
-                                label="Lugar de Entrega"
-                                placeholder="Ej: Sede Central"
-                                {...register('delivery_location')}
-                            />
                         </div>
                         <div className="mt-4">
                             <Textarea
-                                label="Detalles del Proyecto / Uso"
-                                placeholder="Describa brevemente para qué se utilizarán estos materiales..."
+                                label="Detalle del Proyecto / Uso"
                                 {...register('project_details')}
+                                placeholder="Describa brevemente para qué se usará..."
                             />
+                        </div>
+                    </div>
+
+                    {/* Sección 1.1: Datos BI (Nuevos) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h2 className="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Clasificación y Logística</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input
+                                label="Fecha Requerida"
+                                type="date"
+                                {...register('required_date', { required: 'Requerido' })}
+                            />
+                            <Select
+                                label="Tipo de Compra"
+                                {...register('purchase_type', { required: 'Requerido' })}
+                                options={[
+                                    { value: 'OPEX', label: 'OPEX (Operativo)' },
+                                    { value: 'CAPEX', label: 'CAPEX (Inversión)' },
+                                    { value: 'REPOSICION', label: 'Reposición' },
+                                    { value: 'URGENCIA', label: 'Urgencia' }
+                                ]}
+                            />
+
                         </div>
                     </div>
 
@@ -169,13 +289,14 @@ export default function CreateOrder() {
                                     ))}
                                 </select>
                             </div>
+
                             <Select
                                 label="Condición de Pago"
                                 {...register('payment_conditions')}
                                 options={[
-                                    { value: 'contado', label: 'Contado / Efectivo' },
-                                    { value: 'credito_15', label: 'Crédito 15 días' },
-                                    { value: 'transferencia', label: 'Transferencia Bancaria' }
+                                    { value: '30_DIAS', label: '30 Días' },
+                                    { value: '60_DIAS', label: '60 Días' },
+                                    { value: 'CONTADO', label: 'Contado' }
                                 ]}
                             />
                         </div>
@@ -184,92 +305,157 @@ export default function CreateOrder() {
                     {/* Sección 3: Items */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                         <div className="flex justify-between items-center mb-4 border-b pb-2">
-                            <h2 className="text-lg font-semibold text-slate-800">Items de la Orden</h2>
-                            <button
-                                type="button"
-                                onClick={addItem}
-                                className="text-sm text-sky-600 hover:text-sky-700 font-medium flex items-center"
-                            >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Agregar Item
-                            </button>
+                            <h2 className="text-lg font-semibold text-slate-800">
+                                {orderType === 'service' ? 'Conceptos del Servicio' : 'Items de Compra'}
+                            </h2>
                         </div>
 
-                        <div className="space-y-4">
+                        {/* Add Item Form */}
+                        <div className="grid grid-cols-12 gap-3 mb-4 items-end bg-slate-50 p-4 rounded-lg">
+                            <div className="col-span-5">
+                                <Input
+                                    id="newItemDesc"
+                                    label="Descripción"
+                                    placeholder={orderType === 'service' ? "Ej. Mantenimiento de A/C" : "Ej. Laptop HP"}
+                                    value={newItemDescription}
+                                    onChange={(e) => setNewItemDescription(e.target.value)}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <Input
+                                    id="newItemQty"
+                                    label="Cant."
+                                    type="number"
+                                    placeholder="1"
+                                    value={newItemQuantity}
+                                    onChange={(e) => setNewItemQuantity(parseFloat(e.target.value))}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Unidad</label>
+                                <select
+                                    value={newItemUnitMeasure}
+                                    onChange={(e) => setNewItemUnitMeasure(e.target.value)}
+                                    className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm h-[42px]"
+                                >
+                                    {unitsList?.map((u: any) => (
+                                        <option key={u.code} value={u.code}>{u.code} - {u.name}</option>
+                                    ))}
+                                    {!unitsList?.length && <option value="UND">UND</option>}
+                                </select>
+                            </div>
+                            <div className="col-span-2">
+                                <Input
+                                    id="newItemPrice"
+                                    label="Precio Unit."
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={newItemUnitPrice}
+                                    onChange={(e) => setNewItemUnitPrice(parseFloat(e.target.value))}
+                                />
+                            </div>
+                            <div className="col-span-1">
+                                <button
+                                    type="button"
+                                    onClick={addItem}
+                                    className="w-full h-[42px] bg-sky-500 hover:bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-md transition-all"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* List Items */}
+                        <div className="space-y-2">
+                            {items.map(item => (
+                                <div key={item.id} className="grid grid-cols-12 gap-4 items-center p-3 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100 transition-all">
+                                    <div className="col-span-5 font-medium text-slate-700">{item.description}</div>
+                                    <div className="col-span-2 text-center text-slate-600">{item.quantity} {item.unit_measure}</div>
+                                    <div className="col-span-2 text-right text-slate-600">S/ {item.unit_price.toFixed(2)}</div>
+                                    <div className="col-span-2 text-right font-bold text-slate-800">S/ {item.subtotal.toFixed(2)}</div>
+                                    <div className="col-span-1 text-center">
+                                        <button type="button" onClick={() => removeItem(item.id!)} className="text-red-400 hover:text-red-600">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                             {items.length === 0 && (
-                                <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
-                                    No hay items agregados. Haga clic en "Agregar Item".
+                                <div className="text-center py-8 text-slate-400 italic">
+                                    No hay items agregados
                                 </div>
                             )}
+                        </div>
 
-                            {items.map((item, index) => (
-                                <div key={index} className="flex gap-4 items-start bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                    <div className="flex-1 space-y-3">
-                                        <Input
-                                            label="Descripción"
-                                            value={item.description}
-                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                            placeholder="Nombre del producto..."
-                                        />
-                                        <div className="grid grid-cols-4 gap-3">
-                                            <Input
-                                                label="Cant."
-                                                type="number"
-                                                value={item.quantity}
-                                                onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                                            />
-                                            <Input
-                                                label="Unidad"
-                                                value={item.unit_measure}
-                                                onChange={(e) => updateItem(index, 'unit_measure', e.target.value)}
-                                            />
-                                            <Input
-                                                label="Precio Unit."
-                                                type="number"
-                                                value={item.unit_price}
-                                                onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
-                                            />
-                                            <div className="pt-7 text-right font-semibold text-slate-700">
-                                                S/ {item.subtotal.toFixed(2)}
-                                            </div>
-                                        </div>
+                        {/* Total */}
+                        <div className="mt-6 flex justify-end">
+                            <div className="text-right">
+                                <span className="text-slate-500 mr-4">Total Estimado:</span>
+                                <span className="text-2xl font-bold text-slate-900">
+                                    S/ {items.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column - Attachments & Actions */}
+                <div className="space-y-8">
+                    {/* Attachments Section */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h2 className="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Cotizaciones / Adjuntos</h2>
+
+                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer relative">
+                            <input
+                                type="file"
+                                multiple
+                                onChange={handleFileChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <div className="flex flex-col items-center">
+                                <UploadCloud className="w-8 h-8 text-sky-500 mb-2" />
+                                <p className="text-sm font-medium text-slate-700">Click para subir archivos</p>
+                                <p className="text-xs text-slate-400 mt-1">PDF, PNG, JPG (Max 5MB)</p>
+                            </div>
+                        </div>
+
+                        {/* File List */}
+                        <div className="mt-4 space-y-2">
+                            {files.map((file, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-sm">
+                                    <div className="flex items-center truncate">
+                                        <FileText className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />
+                                        <span className="truncate max-w-[150px]">{file.name}</span>
                                     </div>
                                     <button
-                                        onClick={() => removeItem(index)}
-                                        className="mt-8 text-slate-400 hover:text-red-500 transition-colors"
+                                        type="button"
+                                        onClick={() => removeFile(idx)}
+                                        className="text-slate-400 hover:text-red-500"
                                     >
-                                        <Trash2 className="w-5 h-5" />
+                                        <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
                         </div>
-
-                        <div className="mt-6 flex justify-end items-center border-t pt-4">
-                            <span className="text-lg text-slate-600 mr-4">Total Estimado:</span>
-                            <span className="text-2xl font-bold text-slate-900">S/ {calculateTotal().toFixed(2)}</span>
+                        <div className="space-y-6">
+                            <div className="bg-sky-50 border border-sky-100 p-6 rounded-xl">
+                                <h3 className="font-semibold text-sky-800 mb-2">Flujo de Aprobación</h3>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center text-sm text-sky-700">
+                                        <div className="w-6 h-6 rounded-full bg-sky-200 flex items-center justify-center text-xs font-bold mr-3">1</div>
+                                        Solicitud Creada
+                                    </li>
+                                    <li className="flex items-center text-sm text-sky-700 opacity-50">
+                                        <div className="w-6 h-6 rounded-full bg-sky-200 flex items-center justify-center text-xs font-bold mr-3">2</div>
+                                        Revisión (WhatsApp)
+                                    </li>
+                                    <li className="flex items-center text-sm text-sky-700 opacity-50">
+                                        <div className="w-6 h-6 rounded-full bg-sky-200 flex items-center justify-center text-xs font-bold mr-3">3</div>
+                                        Aprobada
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
-
-                </div>
-
-                {/* Sidebar Informativo */}
-                <div className="space-y-6">
-                    <div className="bg-sky-50 border border-sky-100 p-6 rounded-xl">
-                        <h3 className="font-semibold text-sky-800 mb-2">Flujo de Aprobación</h3>
-                        <ul className="space-y-3">
-                            <li className="flex items-center text-sm text-sky-700">
-                                <div className="w-6 h-6 rounded-full bg-sky-200 flex items-center justify-center text-xs font-bold mr-3">1</div>
-                                Solicitud Creada
-                            </li>
-                            <li className="flex items-center text-sm text-sky-700 opacity-50">
-                                <div className="w-6 h-6 rounded-full bg-sky-200 flex items-center justify-center text-xs font-bold mr-3">2</div>
-                                Revisión (WhatsApp)
-                            </li>
-                            <li className="flex items-center text-sm text-sky-700 opacity-50">
-                                <div className="w-6 h-6 rounded-full bg-sky-200 flex items-center justify-center text-xs font-bold mr-3">3</div>
-                                Aprobada
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
