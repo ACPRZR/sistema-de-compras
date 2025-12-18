@@ -19,7 +19,7 @@ export default function OrderDetails() {
     *,
     items: order_items(*),
         supplier: suppliers(*),
-            requestor: profiles(*),
+            requestor: profiles!orders_user_id_fkey(*),
                 attachments: order_attachments(*)
                 `)
                 .eq('id', id)

@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Search, Filter, RefreshCw, ShoppingCart, Wrench, FileText, Clock, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Search, Filter, RefreshCw, ShoppingCart, Wrench, FileText, Clock, CheckCircle2, Share2, MessageCircle, Copy } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Toast, { type ToastType } from '../components/UI/Toast';
 
 const getStatusBadge = (status: string) => {
     switch (status) {
@@ -25,36 +26,24 @@ const getTypeIcon = (type: string) => {
 
 export default function Dashboard() {
     const queryClient = useQueryClient();
-    const [orders, setOrders] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<any>(null);
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
-    // Fetch Orders
-    useEffect(() => {
-        const fetchOrders = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const { data, error } = await supabase
-                    .from('orders')
-                    .select(`
-                        *,
-                        profiles (full_name, email)
-                    `)
-                    .order('created_at', { ascending: false });
+    // React Query Fetcher
+    const { data: orders = [], isLoading, error } = useQuery({
+        queryKey: ['orders'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('orders')
+                .select(`
+                    *,
+                    profiles:profiles!orders_user_id_fkey (full_name, email)
+                `)
+                .order('created_at', { ascending: false });
 
-                if (error) throw error;
-                setOrders(data || []);
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                setError(err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchOrders();
-    }, []);
+            if (error) throw error;
+            return data || [];
+        }
+    });
 
     // Realtime Subscription
     useEffect(() => {
@@ -65,15 +54,47 @@ export default function Dashboard() {
                 { event: '*', schema: 'public', table: 'orders' },
                 (payload) => {
                     console.log('Realtime update:', payload);
-                    // Invalidate queries if using useQuery, or re-fetch manually
-                    // Since we are manually fetching in this version:
-                    // We could trigger a refetch, but for now we'll imply it needs refresh
-                    // However, we have queryClient available, so we can invalidate if we switch back to useQuery later
-                    // For now, let's just log.
+
+                    // Invalidate to refresh table
                     queryClient.invalidateQueries({ queryKey: ['orders'] });
+
+                    // Notification Logic
+                    if (payload.eventType === 'UPDATE') {
+                        const newOrder = payload.new;
+                        const oldOrder = payload.old; // Note: 'old' might only contain ID for non-RLS details, checking status specifically if available
+
+                        // We can't rely strictly on 'old.status' if RLS doesn't send it, but we can check the new status.
+                        // Ideally we only want to notify if it CHANGED to approved.
+                        // Assuming payload contains full NEW record.
+
+                        if (newOrder.status === 'approved') {
+                            setToast({
+                                message: `¡La Orden #${newOrder.order_number} ha sido APROBADA!`,
+                                type: 'success'
+                            });
+                            // Play notification sound
+                            const audio = new Audio('/notification.mp3'); // Optional, if file exists. 
+                            // Just UI toast is safer for now.
+                        } else if (newOrder.status === 'rejected') {
+                            setToast({
+                                message: `La Orden #${newOrder.order_number} ha sido RECHAZADA.`,
+                                type: 'error'
+                            });
+                        }
+                    } else if (payload.eventType === 'INSERT') {
+                        setToast({
+                            message: `Nueva Orden #${payload.new.order_number} registrada.`,
+                            type: 'info'
+                        });
+                    }
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log('Realtime Subscription Status:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('Listening for updates on orders table...');
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -86,7 +107,7 @@ export default function Dashboard() {
         const headers = ['Order Number', 'Date', 'Status', 'Total', 'Department', 'Requester'];
         const csvContent = [
             headers.join(','),
-            ...orders.map(o => [
+            ...orders.map((o: any) => [
                 o.order_number,
                 new Date(o.created_at).toLocaleDateString(),
                 o.status,
@@ -104,10 +125,18 @@ export default function Dashboard() {
     };
 
     if (isLoading) return <div className="p-8 text-center">Cargando dashboard...</div>;
-    if (error) return <div className="p-8 text-red-500">Error cargando datos: {error.message}</div>;
+    if (error) return <div className="p-8 text-red-500">Error cargando datos: {(error as Error).message}</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             <header className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Dashboard General</h1>
@@ -149,7 +178,7 @@ export default function Dashboard() {
                     <div>
                         <div className="text-slate-500 text-sm font-medium mb-1">Pendientes</div>
                         <div className="text-3xl font-bold text-slate-900">
-                            {orders?.filter(o => o.status === 'created' || o.status === 'review').length || 0}
+                            {orders?.filter((o: any) => o.status === 'created' || o.status === 'review').length || 0}
                         </div>
                     </div>
                 </div>
@@ -160,7 +189,7 @@ export default function Dashboard() {
                     <div>
                         <div className="text-slate-500 text-sm font-medium mb-1">Aprobadas</div>
                         <div className="text-3xl font-bold text-slate-900">
-                            {orders?.filter(o => o.status === 'approved').length || 0}
+                            {orders?.filter((o: any) => o.status === 'approved').length || 0}
                         </div>
                     </div>
                 </div>
@@ -207,14 +236,7 @@ export default function Dashboard() {
                                         {order.profiles?.full_name || order.profiles?.email || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline - flex items - center px - 2.5 py - 0.5 rounded - full text - xs font - medium capitalize
-                      ${order.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                                                order.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                            }
-`}>
-                                            {order.status}
-                                        </span>
+                                        {getStatusBadge(order.status)}
                                     </td>
                                     <td className="px-6 py-4 font-medium text-slate-700">
                                         S/ {order.total_amount}
@@ -224,15 +246,30 @@ export default function Dashboard() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         {order.whatsapp_token && order.status === 'created' && (
-                                            <a
-                                                href={`https://yzhhmixqfkwrhiaortib.supabase.co/functions/v1/process-approval?token=${order.whatsapp_token}&action=approve`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-xs bg-green-100 text-green-600 px-3 py-1 rounded-full hover:bg-green-200 transition-colors font-medium"
-                                                title="Simular Clic del Presidente"
-                                            >
-                                                Simular Aprobación
-                                            </a >
+                                            <div className="flex items-center gap-2 justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/approval?token=${order.whatsapp_token}&action=approve`;
+                                                        const message = `Hola, solicito aprobación para la Orden *${order.order_number}* de valor *S/ ${order.total_amount}*. \n\nLink de aprobación: ${link}`;
+                                                        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                    }}
+                                                    className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
+                                                    title="Enviar por WhatsApp"
+                                                >
+                                                    <MessageCircle className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/approval?token=${order.whatsapp_token}&action=approve`;
+                                                        navigator.clipboard.writeText(link);
+                                                        alert('Link copiado al portapapeles');
+                                                    }}
+                                                    className="p-2 bg-slate-50 text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                                                    title="Copiar Link"
+                                                >
+                                                    <Copy className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         )}
                                     </td >
                                 </tr >

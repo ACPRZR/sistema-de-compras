@@ -22,7 +22,7 @@ export default function CreateOrder() {
     // New Item State
     const [newItemDescription, setNewItemDescription] = useState('');
     const [newItemQuantity, setNewItemQuantity] = useState(1);
-    const [newItemUnitMeasure, setNewItemUnitMeasure] = useState('und');
+    const [newItemUnitMeasure, setNewItemUnitMeasure] = useState('UND');
     const [newItemUnitPrice, setNewItemUnitPrice] = useState(0);
 
     const navigate = useNavigate();
@@ -80,13 +80,13 @@ export default function CreateOrder() {
                     purchase_type: data.purchase_type,
                     payment_condition: data.payment_conditions,
                     delivery_location_id: data.delivery_location_id,
-                    delivery_location_id: data.delivery_location_id,
+                    whatsapp_token: crypto.randomUUID(), // Generate token for approval flow
                     project_details: data.project_details,
                     priority: data.priority,
 
                     // Auto-generate order number (simple random for now, trigger handles real one usually)
                     order_number: `OC-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
-                    supplier_id: data.supplier_id
+                    supplier_id: data.supplier_id || null
                 })
                 .select()
                 .single();
@@ -147,7 +147,7 @@ export default function CreateOrder() {
             navigate('/');
         } catch (error: any) {
             console.error(error);
-            alert('Error al crear la orden: ' + error.message);
+            alert('Error al crear la orden: ' + (error.message || JSON.stringify(error)));
         } finally {
             setLoading(false);
         }
@@ -160,6 +160,7 @@ export default function CreateOrder() {
         }
 
         setItems([...items, {
+            id: crypto.randomUUID(),
             description: newItemDescription,
             quantity: newItemQuantity,
             unit_price: newItemUnitPrice,
@@ -225,11 +226,11 @@ export default function CreateOrder() {
                                 label="Unidad de Negocio"
                                 {...register('department', { required: 'Requerido' })}
                                 options={[
-                                    { value: 'logistica', label: 'Logística' },
-                                    { value: 'mantenimiento', label: 'Mantenimiento' },
-                                    { value: 'contabilidad', label: 'Contabilidad' },
-                                    { value: 'oficina_nacional', label: 'Oficina Nacional' },
-                                    { value: 'comunicaciones_sistemas', label: 'Comunicaciones y Sistemas' }
+                                    { value: 'LOGISTICA', label: 'Logística' },
+                                    { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
+                                    { value: 'CONTABILIDAD', label: 'Contabilidad' },
+                                    { value: 'OFICINA_NACIONAL', label: 'Oficina Nacional' },
+                                    { value: 'COMUNICACIONES_SISTEMAS', label: 'Comunicaciones y Sistemas' }
                                 ]}
                             />
                             <Select
@@ -280,10 +281,10 @@ export default function CreateOrder() {
                             <div className="space-y-1">
                                 <label className="block text-sm font-medium text-slate-700">Seleccionar Proveedor</label>
                                 <select
-                                    {...register('supplier_id', { required: 'Este campo es requerido' })}
+                                    {...register('supplier_id')}
                                     className="w-full rounded-lg border-slate-200 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
                                 >
-                                    <option value="">-- Seleccione --</option>
+                                    <option value="">Sin Proveedor</option>
                                     {suppliersList?.map((s: any) => (
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
@@ -374,7 +375,7 @@ export default function CreateOrder() {
                                     <div className="col-span-2 text-right text-slate-600">S/ {item.unit_price.toFixed(2)}</div>
                                     <div className="col-span-2 text-right font-bold text-slate-800">S/ {item.subtotal.toFixed(2)}</div>
                                     <div className="col-span-1 text-center">
-                                        <button type="button" onClick={() => removeItem(item.id!)} className="text-red-400 hover:text-red-600">
+                                        <button type="button" onClick={() => removeItem(items.indexOf(item))} className="text-red-400 hover:text-red-600">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>

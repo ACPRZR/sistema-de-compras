@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Wrench } from 'lucide-react';
+import { ShoppingCart, Wrench, MessageCircle, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 
 const getTypeIcon = (type: string) => {
@@ -78,6 +78,7 @@ export default function OrdersHistory() {
                                 <th className="px-6 py-4 font-medium text-slate-500">Estado</th>
                                 <th className="px-6 py-4 font-medium text-slate-500">Fecha</th>
                                 <th className="px-6 py-4 font-medium text-slate-500">Total</th>
+                                <th className="px-6 py-4 font-medium text-slate-500 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -105,11 +106,39 @@ export default function OrdersHistory() {
                                     <td className="px-6 py-4 font-medium text-slate-700">
                                         S/ {order.total_amount}
                                     </td>
+                                    <td className="px-6 py-4 text-right">
+                                        {order.whatsapp_token && (order.status === 'created' || order.status === 'pending_approval') && (
+                                            <div className="flex items-center gap-2 justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/approval?token=${order.whatsapp_token}&action=approve`;
+                                                        const message = `Hola, solicito aprobación para la Orden *${order.order_number}* de valor *S/ ${order.total_amount}*. \n\nLink de aprobación: ${link}`;
+                                                        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                    }}
+                                                    className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
+                                                    title="Enviar por WhatsApp"
+                                                >
+                                                    <MessageCircle className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/approval?token=${order.whatsapp_token}&action=approve`;
+                                                        navigator.clipboard.writeText(link);
+                                                        alert('Link copiado al portapapeles');
+                                                    }}
+                                                    className="p-2 bg-slate-50 text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                                                    title="Copiar Link"
+                                                >
+                                                    <Copy className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                             {orders.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
+                                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
                                         No hay órdenes en el historial.
                                     </td>
                                 </tr>

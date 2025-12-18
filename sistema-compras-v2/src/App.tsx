@@ -12,6 +12,7 @@ import Suppliers from './pages/Suppliers';
 import NewRequest from './pages/NewRequest';
 import OrdersHistory from './pages/OrdersHistory';
 import Users from './pages/Users';
+import Approval from './pages/Approval';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/approval" element={<Approval />} />
 
             <Route path="/" element={
               <ProtectedRoute>
