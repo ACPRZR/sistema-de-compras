@@ -1,73 +1,55 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Sistema de Compras - LADP Logística (v2.0)
 
-Currently, two official plugins are available:
+Sistema integral para la gestión de compras y órdenes de servicio, desarrollado con tecnologías modernas para asegurar rapidez, seguridad y escalabilidad.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Tecnologías Principales
 
-## React Compiler
+*   **Frontend**: React 19, Vite, TypeScript, Tailwind CSS v4.
+*   **Backend**: Supabase (Auth, Database, Storage, Realtime).
+*   **Estado**: TanStack Query (React Query).
+*   **Testing**: Vitest + React Testing Library.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📚 Documentación Técnica
 
-## Expanding the ESLint configuration
+Hemos creado una wiki interna detallada para desarrolladores. Consulta la carpeta `docs/` para más información:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+*   [🏗️ Arquitectura del Sistema](docs/ARCHITECTURE.md)
+*   [🗄️ Base de Datos y Seguridad](docs/DATABASE.md)
+*   [🎨 Frontend y Componentes](docs/FRONTEND.md)
+*   [⚡ Backend y Lógica Serverless](docs/BACKEND_API.md)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Instalación y Uso
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1.  **Clonar el repositorio**:
+    ```bash
+    git clone https://github.com/usuario/sistema-compras-v2.git
+    cd sistema-compras-v2
+    ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2.  **Instalar dependencias**:
+    ```bash
+    npm install
+    ```
+
+3.  **Configurar Variables de Entorno**:
+    Crea un archivo `.env` en la raíz con tus credenciales de Supabase:
+    ```env
+    VITE_SUPABASE_URL=tu_url_supabase
+    VITE_SUPABASE_ANON_KEY=tu_anon_key_supabase
+    ```
+
+4.  **Iniciar servidor de desarrollo**:
+    ```bash
+    npm run dev
+    ```
+
+## ✅ Testing
+
+Para ejecutar la suite de pruebas automatizadas:
+```bash
+npm test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+Desarrollado para **LADP Logística**.
