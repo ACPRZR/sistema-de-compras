@@ -12,9 +12,6 @@ interface Supplier {
     contact_name: string;
     contact_email: string;
     contact_phone: string;
-    contact_name: string;
-    contact_email: string;
-    contact_phone: string;
     category_id?: number;
     categories?: { name: string }; // Join
 }
@@ -80,8 +77,6 @@ export default function Suppliers() {
             name: formData.get('name') as string,
             ruc: formData.get('ruc') as string,
             contact_name: formData.get('contact_name') as string,
-            contact_email: formData.get('contact_email') as string,
-            contact_phone: formData.get('contact_phone') as string,
             contact_email: formData.get('contact_email') as string,
             contact_phone: formData.get('contact_phone') as string,
             category_id: formData.get('category_id') ? Number(formData.get('category_id')) : undefined,

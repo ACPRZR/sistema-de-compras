@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Filter, RefreshCw, ShoppingCart, Wrench, FileText, Clock, CheckCircle2, Share2, MessageCircle, Copy } from 'lucide-react';
+import { Plus, ShoppingCart, Wrench, FileText, CheckCircle2, Clock, MessageCircle, Copy } from 'lucide-react';
 import { supabase } from '../services/supabase';
-import { useAuth } from '../hooks/useAuth';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Toast, { type ToastType } from '../components/UI/Toast';
