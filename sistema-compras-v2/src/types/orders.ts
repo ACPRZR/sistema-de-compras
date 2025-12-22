@@ -41,7 +41,9 @@ export interface PurchaseOrderForm {
     supplier_name?: string;
 
     // Logistics
-    project_details: string; // Keep for now or map to cost center
+    project_details?: string; // Optional note now
+    cost_center_id: number; // Required BI field
+    category_id?: number; // New: Expense Category
     delivery_location_id?: number; // FK
     incoterm?: Incoterm;
 

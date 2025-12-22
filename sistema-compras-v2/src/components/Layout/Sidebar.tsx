@@ -2,26 +2,41 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, ShoppingCart, FileText, Settings, Users, LogOut, Building2, Package } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../services/supabase';
 
 const Sidebar = () => {
-    const { signOut } = useAuth();
+    const { user, signOut } = useAuth();
+
+    // Fetch Profile for Role Based Access
+    const { data: profile } = useQuery({
+        queryKey: ['my_profile_sidebar'],
+        queryFn: async () => {
+            if (!user?.id) return null;
+            const { data } = await supabase.from('profiles').select('department').eq('id', user.id).single();
+            return data;
+        },
+        enabled: !!user?.id
+    });
+
+    const isAdmin = profile?.department === 'LOGISTICA' || user?.email === 'alvaro-cpr@outlook.com';
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
         { icon: ShoppingCart, label: 'Nueva Orden', to: '/ordenes/nueva' },
         { icon: FileText, label: 'Historial', to: '/ordenes/historial' },
         { icon: Package, label: 'Proveedores', to: '/proveedores' },
-        { icon: Users, label: 'Usuarios', to: '/usuarios' }, // Admin only later
+        ...(isAdmin ? [{ icon: Users, label: 'Usuarios', to: '/usuarios' }] : []),
     ];
 
     return (
         <aside className="fixed left-0 top-0 h-screen w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 z-50">
             {/* Logo Area */}
             <div className="h-16 flex items-center px-6 border-b border-slate-800">
-                <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center mr-3 shadow-lg shadow-sky-500/20">
-                    <span className="text-white font-bold text-xl">L</span>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
+                    <img src="/logo-adp.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <span className="text-white font-bold text-lg tracking-tight">LADP Logist</span>
+                <span className="text-white font-bold text-lg tracking-tight">Sistema de Compras LADP</span>
             </div>
 
             {/* Navigation */}

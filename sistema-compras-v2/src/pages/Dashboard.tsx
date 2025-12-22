@@ -204,9 +204,8 @@ export default function Dashboard() {
                     <table className="w-full text-left text-sm">
                         <thead>
                             <tr className="border-b border-slate-100 text-slate-500">
-                                <th className="px-6 py-4 font-medium">N° Orden</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Orden</th>
+                                <th className="px-6 py-4 font-medium">N° Orden</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Solicitante</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
@@ -216,12 +215,12 @@ export default function Dashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
-                                <tr><td colSpan={8} className="text-center py-8">Cargando...</td></tr>
+                                <tr><td colSpan={7} className="text-center py-8">Cargando...</td></tr>
                             ) : orders?.map((order: any) => (
                                 <tr key={order.id} className="hover:bg-slate-50 transition-colors cursor-pointer">
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex justify-center">
-                                            {getTypeIcon(order.order_type)}
+                                        <div className="flex justify-start">
+                                            {getTypeIcon(order.order_type || 'purchase')}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap font-medium text-sky-600">
@@ -240,9 +239,6 @@ export default function Dashboard() {
                                     </td>
                                     <td className="px-6 py-4 font-medium text-slate-700">
                                         S/ {order.total_amount}
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-500">
-                                        {new Date(order.created_at).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         {order.whatsapp_token && order.status === 'created' && (

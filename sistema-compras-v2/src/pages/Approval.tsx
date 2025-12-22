@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { CheckCircle2, XCircle, Loader2, FileText, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, FileText, Lock, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -10,21 +10,26 @@ interface OrderDetail {
     order_number: string;
     created_at: string;
     total_amount: number;
-    supplier: { name: string } | null;
+    supplier: { name: string; ruc: string } | null;
     items: {
         quantity: number;
         unit_price: number;
-        total_price: number;
-        product: { name: string; sku: string };
+        description: string;
+        unit_measure: string;
     }[];
+    cost_centers?: { code: string; name: string };
+    categories?: { name: string };
+    requestor?: { full_name: string; email: string };
+    project_details?: string;
+    department?: string;
 }
 
 export default function Approval() {
+    // ... (rest of imports and searchParams logic remains same, just replacing component body parts)
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
-    // We don't rely on 'action' param for the flow anymore, as the initial load is always 'get-details'
-    // and the button click determines 'approve' or 'reject'.
 
+    // ... (state declarations)
     const [status, setStatus] = useState<'loading' | 'input' | 'processing' | 'success' | 'error'>('loading');
     const [order, setOrder] = useState<OrderDetail | null>(null);
     const [title, setTitle] = useState('');
@@ -40,7 +45,7 @@ export default function Approval() {
             }
 
             try {
-                // Fetch Order Details
+                // Fetch Order Details via Edge Function
                 const { data, error } = await supabase.functions.invoke('process-approval', {
                     body: { token, action: 'get-details' }
                 });
@@ -49,7 +54,7 @@ export default function Approval() {
                 if (data.error) throw new Error(data.error);
 
                 setOrder(data.order);
-                setStatus('input'); // Ready for input
+                setStatus('input');
             } catch (err: any) {
                 console.error('Fetch Error:', err);
                 setStatus('error');
@@ -84,7 +89,7 @@ export default function Approval() {
             setMessage(data.message || 'La operación se completó exitosamente.');
         } catch (err: any) {
             console.error('Process Error:', err);
-            setStatus('input'); // Go back to input on error to retry
+            setStatus('input');
             alert('Error: ' + (err.message || 'Falló el proceso. Revise el código.'));
         }
     };
@@ -129,7 +134,6 @@ export default function Approval() {
         );
     }
 
-    // Input State (Summary + Pin)
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
             <div className="max-w-3xl w-full space-y-8">
@@ -152,12 +156,47 @@ export default function Approval() {
                         </div>
                     </div>
 
+                    {/* Context Info Grid */}
+                    <div className="bg-slate-50 rounded-xl p-5 mb-6 text-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Slot 1: Requestor */}
+                        <div>
+                            <span className="block text-slate-400 text-xs uppercase tracking-wide font-semibold mb-1">Solicitado Por</span>
+                            <div className="font-medium text-slate-900 capitalize">{order?.requestor?.full_name?.toLowerCase() || order?.requestor?.email || 'Usuario'}</div>
+                        </div>
+
+                        {/* Slot 2: Category */}
+                        <div>
+                            <span className="block text-slate-400 text-xs uppercase tracking-wide font-semibold mb-1">Categoría del Gasto</span>
+                            <div className="font-medium text-blue-700 bg-blue-50 inline-block px-2 py-0.5 rounded text-xs capitalize">
+                                {order?.categories?.name?.toLowerCase() || 'General'}
+                            </div>
+                        </div>
+
+                        {/* Slot 3: Flow (Requestor -> Destination) */}
+                        <div>
+                            <span className="block text-slate-400 text-xs uppercase tracking-wide font-semibold mb-1">Flujo de Solicitud</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-slate-600 text-sm capitalize">{order?.department?.toLowerCase() || 'Área Solicitante'}</span>
+                                <ArrowRight className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                <div className="font-bold text-slate-900 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 text-sm capitalize">
+                                    {order?.cost_centers?.name?.toLowerCase() || 'Destino'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Slot 4: Justification */}
+                        <div>
+                            <span className="block text-slate-400 text-xs uppercase tracking-wide font-semibold mb-1">Justificación</span>
+                            <div className="font-medium text-slate-900 leading-snug">{order?.project_details || 'Sin detalles'}</div>
+                        </div>
+                    </div>
+
                     {/* Summary List */}
                     <div className="border rounded-xl overflow-hidden mb-6">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Producto</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Item / Descripción</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Cant.</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Total</th>
                                 </tr>
@@ -165,13 +204,13 @@ export default function Approval() {
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {order?.items.map((item, idx) => (
                                     <tr key={idx}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                                            {item.product?.name || 'Producto no encontrado'}
-                                            <span className="block text-xs text-slate-400">{item.product?.sku || '-'}</span>
+                                        <td className="px-6 py-4 text-sm text-slate-900">
+                                            <div className="font-medium line-clamp-2">{item.description}</div>
+                                            <div className="text-xs text-slate-400 mt-0.5">{item.unit_measure}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-right">{item.quantity}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right font-medium">
-                                            S/ {(Number(item.total_price) || 0).toFixed(2)}
+                                            S/ {(item.quantity * item.unit_price).toFixed(2)}
                                         </td>
                                     </tr>
                                 ))}
@@ -190,7 +229,7 @@ export default function Approval() {
                     {/* Supplier Info */}
                     <div className="bg-slate-50 rounded-lg p-4 mb-8 text-sm text-slate-600 flex justify-between items-center">
                         <span className="font-medium">Proveedor:</span>
-                        <span>{order?.supplier?.name || 'Sin Proveedor Asignado'}</span>
+                        <span className="capitalize">{order?.supplier?.name?.toLowerCase() || 'Sin Proveedor Asignado'}</span>
                     </div>
 
                     {/* Action Section */}

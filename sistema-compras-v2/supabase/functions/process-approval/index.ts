@@ -26,11 +26,14 @@ Deno.serve(async (req) => {
             .from('orders')
             .select(`
         *,
+        *,
         items:order_items(
-          *,
-          product:products(name, sku)
+          *
         ),
-        supplier:suppliers(name)
+        supplier:suppliers(name, ruc),
+        cost_centers(code, name),
+        categories(name),
+        requestor:profiles!orders_user_id_fkey(full_name, email)
       `)
             .eq('whatsapp_token', token)
             .limit(1)
