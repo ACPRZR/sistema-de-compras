@@ -1,5 +1,5 @@
 
-import type { OrderItem } from '../types/orders';
+
 
 export const calculateItemSubtotal = (quantity: number, unitPrice: number): number => {
     if (quantity < 0 || unitPrice < 0) return 0;

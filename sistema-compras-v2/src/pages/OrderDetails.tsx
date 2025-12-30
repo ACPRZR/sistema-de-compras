@@ -3,8 +3,8 @@ import { ArrowLeft, Printer, Paperclip, Download, CheckCircle2, XCircle, Clock }
 import { supabase } from '../services/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import type { Order } from '../types/orders';
+
+
 
 export default function OrderDetails() {
     const { id } = useParams<{ id: string }>();
@@ -141,10 +141,11 @@ export default function OrderDetails() {
                 </div>
             </div>
 
-            {/* 3. Supplier (New Row) */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Proveedor</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 3. Supplier & Project Details (Side by Side) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:gap-8">
+                {/* Supplier */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Proveedor</h2>
                     <div className="space-y-3">
                         <div>
                             <span className="text-slate-400 text-sm block">Razón Social</span>
@@ -154,6 +155,16 @@ export default function OrderDetails() {
                             <span className="text-slate-400 text-sm block">RUC/ID</span>
                             <span className="font-medium text-slate-900">{order.supplier?.ruc || '-'}</span>
                         </div>
+                    </div>
+                </div>
+
+                {/* Project Details */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 print:shadow-none print:border print:border-slate-200 flex flex-col">
+                    <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Detalles del Proyecto / Uso</h2>
+                    <div className="flex-1">
+                        <p className="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100 print:bg-white print:border-none print:p-0 min-h-[80px] break-words whitespace-pre-wrap">
+                            {order.project_details || 'Sin detalles adicionales.'}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -195,13 +206,7 @@ export default function OrderDetails() {
                 </table>
             </div>
 
-            {/* Project Details */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 print:shadow-none print:border print:border-slate-200">
-                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Detalles del Proyecto / Uso</h2>
-                <p className="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100 print:bg-white print:border-none print:p-0">
-                    {order.project_details || 'Sin detalles adicionales.'}
-                </p>
-            </div>
+
 
             {/* Attachments Section */}
             {order.attachments && order.attachments.length > 0 && (

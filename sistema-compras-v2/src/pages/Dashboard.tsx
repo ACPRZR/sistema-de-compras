@@ -59,7 +59,7 @@ export default function Dashboard() {
                     // Notification Logic
                     if (payload.eventType === 'UPDATE') {
                         const newOrder = payload.new;
-                        const oldOrder = payload.old; // Note: 'old' might only contain ID for non-RLS details, checking status specifically if available
+
 
                         // We can't rely strictly on 'old.status' if RLS doesn't send it, but we can check the new status.
                         // Ideally we only want to notify if it CHANGED to approved.
@@ -71,7 +71,7 @@ export default function Dashboard() {
                                 type: 'success'
                             });
                             // Play notification sound
-                            const audio = new Audio('/notification.mp3'); // Optional, if file exists. 
+                            // const audio = new Audio('/notification.mp3'); // Optional, if file exists. 
                             // Just UI toast is safer for now.
                         } else if (newOrder.status === 'rejected') {
                             setToast({

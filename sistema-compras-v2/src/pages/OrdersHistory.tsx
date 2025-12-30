@@ -1,9 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Wrench, MessageCircle, Copy } from 'lucide-react';
-import { format } from 'date-fns';
+
 
 const getTypeIcon = (type: string) => {
     return type === 'service'

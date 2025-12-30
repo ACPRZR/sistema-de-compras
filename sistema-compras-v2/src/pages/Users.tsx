@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { Loader2, Plus, Edit2, Shield, User as UserIcon, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, Plus, Edit2, Shield, User as UserIcon, CheckCircle2 } from 'lucide-react';
 import { Input } from '../components/UI/Input';
-import { Select } from '../components/UI/Select';
+
 import Toast, { type ToastType } from '../components/UI/Toast';
 
 export default function Users() {
