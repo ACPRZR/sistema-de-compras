@@ -34,7 +34,10 @@ export default function Dashboard() {
                 .from('orders')
                 .select(`
                     *,
-                    profiles:profiles!orders_user_id_fkey (full_name, email)
+                    profiles:profiles!orders_user_id_fkey (full_name, email),
+                    supplier:suppliers (name, ruc),
+                    cost_centers (code, name),
+                    categories (name)
                 `)
                 .order('created_at', { ascending: false });
 
@@ -58,21 +61,13 @@ export default function Dashboard() {
 
                     // Notification Logic
                     if (payload.eventType === 'UPDATE') {
-                        const newOrder = payload.new;
-
-
-                        // We can't rely strictly on 'old.status' if RLS doesn't send it, but we can check the new status.
-                        // Ideally we only want to notify if it CHANGED to approved.
-                        // Assuming payload contains full NEW record.
+                        const newOrder = payload.new as any; // Cast to avoid strict type checks here for brevity
 
                         if (newOrder.status === 'approved') {
                             setToast({
                                 message: `¡La Orden #${newOrder.order_number} ha sido APROBADA!`,
                                 type: 'success'
                             });
-                            // Play notification sound
-                            // const audio = new Audio('/notification.mp3'); // Optional, if file exists. 
-                            // Just UI toast is safer for now.
                         } else if (newOrder.status === 'rejected') {
                             setToast({
                                 message: `La Orden #${newOrder.order_number} ha sido RECHAZADA.`,
@@ -81,7 +76,7 @@ export default function Dashboard() {
                         }
                     } else if (payload.eventType === 'INSERT') {
                         setToast({
-                            message: `Nueva Orden #${payload.new.order_number} registrada.`,
+                            message: `Nueva Orden #${(payload.new as any).order_number} registrada.`,
                             type: 'info'
                         });
                     }
@@ -102,23 +97,47 @@ export default function Dashboard() {
     const exportToCSV = () => {
         if (!orders || orders.length === 0) return;
 
-        const headers = ['Order Number', 'Date', 'Status', 'Total', 'Department', 'Requester'];
+        const headers = [
+            'N° Orden',
+            'Fecha Creación',
+            'Estado',
+            'Moneda',
+            'Total',
+            'Solicitante',
+            'Unidad Negocio (Área)',
+            'Centro de Costos (Destino)',
+            'Categoría',
+            'Tipo Compra',
+            'Proveedor',
+            'RUC Proveedor',
+            'Fecha Aprobación',
+            'Detalles Proyecto'
+        ];
+
         const csvContent = [
             headers.join(','),
             ...orders.map((o: any) => [
                 o.order_number,
                 new Date(o.created_at).toLocaleDateString(),
                 o.status,
+                'PEN', // Hardcoded currency for now as per system default
                 o.total_amount,
-                o.department,
-                o.profiles?.full_name || o.profiles?.email
+                `"${o.profiles?.full_name || o.profiles?.email || ''}"`,
+                `"${o.department || ''}"`,
+                `"${o.cost_centers?.code || ''} - ${o.cost_centers?.name || ''}"`,
+                `"${o.categories?.name || ''}"`,
+                o.purchase_type || '',
+                `"${o.supplier?.name || ''}"`,
+                `"${o.supplier?.ruc || ''}"`,
+                o.approved_at ? new Date(o.approved_at).toLocaleDateString() : '',
+                `"${(o.project_details || '').replace(/"/g, '""')}"` // Escape quotes in description
             ].join(','))
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `reporte_compras_ladp_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
     };
 

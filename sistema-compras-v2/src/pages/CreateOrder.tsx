@@ -111,6 +111,7 @@ export default function CreateOrder() {
                     payment_condition: data.payment_conditions,
                     delivery_location_id: data.delivery_location_id ? Number(data.delivery_location_id) : null,
                     cost_center_id: data.cost_center_id ? Number(data.cost_center_id) : null, // New BI Field
+                    category_id: data.category_id ? Number(data.category_id) : null, // New BI Field
                     whatsapp_token: crypto.randomUUID(), // Generate token for approval flow
                     project_details: data.project_details,
                     priority: data.priority,
