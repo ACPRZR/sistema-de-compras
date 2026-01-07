@@ -24,7 +24,7 @@ export default function CreateOrder() {
     const [newItemDescription, setNewItemDescription] = useState('');
     const [newItemQuantity, setNewItemQuantity] = useState(1);
     const [newItemUnitMeasure, setNewItemUnitMeasure] = useState('UND');
-    const [newItemUnitPrice, setNewItemUnitPrice] = useState(0);
+    const [newItemUnitPrice, setNewItemUnitPrice] = useState<number | string>('');
 
     const navigate = useNavigate();
 
@@ -192,19 +192,23 @@ export default function CreateOrder() {
             return;
         }
 
+        const unitPrice = typeof newItemUnitPrice === 'string'
+            ? (newItemUnitPrice === '' ? 0 : parseFloat(newItemUnitPrice))
+            : newItemUnitPrice;
+
         setItems([...items, {
             id: crypto.randomUUID(),
             description: newItemDescription,
             quantity: newItemQuantity,
-            unit_price: newItemUnitPrice,
+            unit_price: unitPrice,
             unit_measure: newItemUnitMeasure as UnitMeasure,
-            subtotal: calculateItemSubtotal(newItemQuantity, newItemUnitPrice)
+            subtotal: calculateItemSubtotal(newItemQuantity, unitPrice)
         }]);
 
         // Reset
         setNewItemDescription('');
         setNewItemQuantity(1);
-        setNewItemUnitPrice(0);
+        setNewItemUnitPrice('');
     };
 
     const removeItem = (index: number) => {
@@ -430,8 +434,15 @@ export default function CreateOrder() {
                                     placeholder="0.00"
                                     value={newItemUnitPrice}
                                     onChange={(e) => {
-                                        const val = parseFloat(e.target.value);
-                                        if (val >= 0) setNewItemUnitPrice(val);
+                                        const val = e.target.value;
+                                        if (val === '') {
+                                            setNewItemUnitPrice('');
+                                            return;
+                                        }
+                                        const num = parseFloat(val);
+                                        if (!isNaN(num) && num >= 0) {
+                                            setNewItemUnitPrice(val);
+                                        }
                                     }}
                                     min="0"
                                     step="0.01"
