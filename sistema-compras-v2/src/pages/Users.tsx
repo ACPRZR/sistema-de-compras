@@ -305,8 +305,11 @@ export default function Users() {
                                     <option value="LOGISTICA">Logística (Admin)</option>
                                     <option value="MANTENIMIENTO">Mantenimiento</option>
                                     <option value="CONTABILIDAD">Contabilidad</option>
-                                    <option value="OFICINA_NACIONAL">Oficina Nacional</option>
-                                    <option value="COMUNICACIONES_SISTEMAS">Comunicaciones y Sistemas</option>
+                                    <option value="RECEPCION">Recepción</option>
+                                    <option value="JDN">JDN</option>
+                                    <option value="COMUNICACIONES">Comunicaciones</option>
+                                    <option value="SISTEMAS">Sistemas</option>
+                                    <option value="AREA_LEGAL">Área Legal</option>
                                 </select>
                                 <p className="text-xs text-slate-500 mt-1">
                                     Nota: Asignar "LOGISTICA" otorga permisos de administrador.

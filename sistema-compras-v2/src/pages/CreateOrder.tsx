@@ -252,8 +252,11 @@ export default function CreateOrder() {
                                     { value: 'LOGISTICA', label: 'Logística' },
                                     { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
                                     { value: 'CONTABILIDAD', label: 'Contabilidad' },
-                                    { value: 'OFICINA_NACIONAL', label: 'Oficina Nacional' },
-                                    { value: 'COMUNICACIONES_SISTEMAS', label: 'Comunicaciones y Sistemas' }
+                                    { value: 'RECEPCION', label: 'Recepción' },
+                                    { value: 'JDN', label: 'JDN' },
+                                    { value: 'COMUNICACIONES', label: 'Comunicaciones' },
+                                    { value: 'SISTEMAS', label: 'Sistemas' },
+                                    { value: 'AREA_LEGAL', label: 'Área Legal' }
                                 ]}
                             />
                             <div className="space-y-1">

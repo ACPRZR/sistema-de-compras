@@ -3,7 +3,7 @@
 export type PurchaseType = 'CAPEX' | 'OPEX' | 'REPOSICION' | 'URGENCIA';
 export type Currency = 'USD' | 'PEN' | 'EUR';
 export type PaymentCondition = '30_DIAS' | '60_DIAS' | 'CONTADO';
-export type Department = 'LOGISTICA' | 'MANTENIMIENTO' | 'CONTABILIDAD' | 'OFICINA_NACIONAL' | 'COMUNICACIONES_SISTEMAS';
+export type Department = 'LOGISTICA' | 'MANTENIMIENTO' | 'CONTABILIDAD' | 'RECEPCION' | 'JDN' | 'COMUNICACIONES' | 'SISTEMAS' | 'AREA_LEGAL';
 export type UnitMeasure = 'UND' | 'CAJA' | 'KG' | 'LT' | 'MTR' | 'GLN' | 'JGO';
 export type Incoterm = 'FOB' | 'CIF' | 'DDP' | 'EXW';
 

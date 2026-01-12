@@ -45,7 +45,7 @@ export default function OrderDetails() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 print:space-y-4 print:text-xs print:pb-40 font-sans">
+        <div className="max-w-4xl mx-auto space-y-6 print:space-y-4 print:text-xs font-sans">
             {/* Header */}
             <div className="flex items-center justify-between print:hidden">
                 <div className="flex items-center gap-4">
@@ -197,12 +197,12 @@ export default function OrderDetails() {
                             </tr>
                         ))}
                     </tbody>
-                    <tfoot className="bg-slate-50 border-t border-slate-200">
+                    <tbody className="bg-slate-50 border-t border-slate-200">
                         <tr>
                             <td colSpan={4} className="px-6 py-4 text-right font-bold text-slate-600">TOTAL GENERAL</td>
                             <td className="px-6 py-4 text-right font-bold text-slate-900 text-lg">S/ {order.total_amount}</td>
                         </tr>
-                    </tfoot>
+                    </tbody>
                 </table>
             </div>
 
@@ -250,7 +250,7 @@ export default function OrderDetails() {
             )}
 
             {/* Footer / Signatures Area - Fixed at bottom for Print */}
-            <div className="mt-12 break-inside-avoid print:fixed print:bottom-0 print:left-0 print:w-full print:px-8 print:bg-white print:z-50 print:pb-4">
+            <div className="mt-12 break-inside-avoid print:mt-8">
                 <div className="flex justify-between items-end gap-8">
                     {/* LEFT: Creator Audit Badge (Always visible) */}
                     <div>
