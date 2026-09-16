@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Login() {
@@ -100,6 +100,12 @@ export default function Login() {
                         )}
                     </button>
                 </form>
+
+                <div className="mt-4 text-center">
+                    <Link to="/forgot-password" className="text-sm text-sky-300 hover:text-sky-200">
+                        ¿Olvidaste tu contraseña?
+                    </Link>
+                </div>
 
                 <div className="mt-8 pt-6 border-t border-white/10 text-center">
                     <p className="text-xs text-slate-400">
